@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/saezlab/python-project.git",
-  "commit": "4713b199398b024d97880e172b4d147331b50b5b",
-  "checkout": "master",
+  "commit": "6f78bcede4dd997d081f25239a5e033fb014de1f",
+  "checkout": null,
   "context": {
     "cookiecutter": {
       "project_name": "omnipath-client",
@@ -65,7 +65,7 @@
         "cookiecutter.extensions.TimeExtension"
       ],
       "_template": "https://github.com/saezlab/python-project.git",
-      "_commit": "4713b199398b024d97880e172b4d147331b50b5b"
+      "_commit": "6f78bcede4dd997d081f25239a5e033fb014de1f"
     }
   },
   "directory": null
