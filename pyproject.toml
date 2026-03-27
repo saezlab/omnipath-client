@@ -16,7 +16,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
 dependencies = [
+    "pkg_infra @ git+https://github.com/saezlab/pkg_infra.git@main",
+    "download-manager @ git+https://github.com/saezlab/download-manager.git@main",
+    "narwhals>=1.9",
 ]
+
 description = "The new implementation for the OmniPath Python client"
 license = "BSD-3-Clause"
 maintainers = [
@@ -28,6 +32,10 @@ requires-python = ">=3.10"
 version = "0.0.1"
 
 [project.optional-dependencies]
+polars = ["polars>=0.20.0"]
+pandas = ["pandas>=1.5"]
+pyarrow = ["pyarrow>=10"]
+annnet = ["annnet"]
 dev = [
     "distlib",
     "pre-commit",
@@ -182,3 +190,6 @@ section-order = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.hatch.metadata]
+allow-direct-references = true
