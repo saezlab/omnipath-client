@@ -139,7 +139,9 @@ ignore = [
     "E303",  # Name: too-many-blank-lines
     "E501",  # Name: line too long
     "E731",  # Name: lambda-assignment
-    "E741"  # allow I, O, l as variable names -> I is the identity matrix
+    "E741",  # allow I, O, l as variable names -> I is the identity matrix
+    # flake8-annotations (ANN)
+    "ANN401",  # Any is needed for multi-backend DataFrame returns
 ]
 select = [
     "B",  # flake8-bugbear
@@ -185,7 +187,7 @@ section-order = [
 "*/__init__.py" = ["D104", "F401"]
 "docs/*" = ["I"]
 "docs/src/conf.py" = ["D100"]
-"tests/*" = ["D"]
+"tests/*" = ["D", "ANN"]
 "tests/conftest.py" = ["D101", "D102", "D103", "E402"]
 
 [tool.ruff.lint.pydocstyle]
