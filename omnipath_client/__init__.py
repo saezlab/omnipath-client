@@ -13,11 +13,29 @@
 # https://opensource.org/license/bsd-3-clause
 #
 
-"""The new implementation for the OmniPath Python client"""
+"""The new implementation for the OmniPath Python client."""
 
 __all__ = [
     '__version__',
     '__author__',
+    'OmniPath',
+    'entities',
+    'interactions',
+    'associations',
+    'ontology_terms',
+    'ontology_tree',
+    'search_terms',
+    'ontologies',
 ]
 
+from ._client import (
+    OmniPath,
+    entities,
+    ontologies,
+    associations,
+    interactions,
+    search_terms,
+    ontology_tree,
+    ontology_terms,
+)
 from ._metadata import __author__, __version__
