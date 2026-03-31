@@ -1,12 +1,12 @@
 [paths]
 source =
-    project_name
-    */site-packages/omnipath-client
+    omnipath_client
+    */site-packages/omnipath_client
 
 [run]
 branch = true
 parallel = true
-source = omnipath-client
+source = omnipath_client
 omit = */__init__.py
 
 [report]

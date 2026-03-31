@@ -53,7 +53,10 @@ tests = [
     "coverage>=6.0",
     "codecov-cli>=10.2.0",
     "diff_cover",
-    "ruff"
+    "ruff",
+    "polars>=0.20.0",
+    "pandas>=1.5",
+    "pyarrow>=10",
 ]
 
 [project.urls]
