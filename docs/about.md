@@ -28,7 +28,11 @@ file for details.
 
 If you use OmniPath in your research, please cite:
 
-> Türei D, Schaul J, Palacio-Escat N, *et al.* (2026)
-> OmniPath: integrated knowledgebase for multi-omics analysis.
-> *Nucleic Acids Research* 54(D1):D652-D660.
+> Türei D, Schaul J, Palacio-Escat N, Bohár B, Bai Y, Ceccarelli F,
+> Çevrim E, Daley M, Darcan M, Dimitrov D, Doğan T, Domingo-Fernández D,
+> Dugourd A, Gábor A, Gul L, Hall BA, Hoyt CT, Ivanova O, Klein M,
+> Lawrence T, Mañanes D, Módos D, Müller-Dott S, Ölbei M, Schmidt C,
+> Şen B, Theis FJ, Ünlü A, Ulusoy E, Valdeolivas A, Korcsmáros T,
+> Saez-Rodriguez J. (2026) OmniPath: integrated knowledgebase for
+> multi-omics analysis. *Nucleic Acids Research* 54(D1):D652-D660.
 > [doi:10.1093/nar/gkaf1126](https://doi.org/10.1093/nar/gkaf1126)
