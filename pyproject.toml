@@ -29,7 +29,7 @@ maintainers = [
 name = "omnipath-client"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.0.1"
+version = "0.1.0"
 
 [project.optional-dependencies]
 polars = ["polars>=0.20.0"]
