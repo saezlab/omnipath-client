@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 
-SAMPLES_DIR = Path(__file__).parent.parent / 'parquet-samples'
+SAMPLES_DIR = Path(__file__).parent / 'data'
 
 
 @pytest.fixture
