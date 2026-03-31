@@ -1,5 +1,5 @@
-site_name: omnipath_client
-site_url: https://saezlab.github.io/omnipath_client
+site_name: omnipath-client
+site_url: https://saezlab.github.io/omnipath-client
 theme:
     name: material
     font:
@@ -25,52 +25,23 @@ theme:
             icon: material/toggle-switch-off
             name: Switch to light mode
 
-#=======    Website Navigation settings   =====
 nav:
 -   Home: index.md
+-   Installation: installation.md
+-   Quickstart: quickstart.md
+-   Vignettes: vignettes/index.md
+-   API Reference: reference/index.md
+-   About: about.md
 
--   About:
-    -   Project: omnipath-client-project/project.md
-    -   Design philosophy: omnipath-client-project/design-philosophy.md
-    -   Use Cases: omnipath-client-project/use-cases.md
-    -   About: about.md
-
--   Get Started:
-    -   Installation: installation.md
-    -   Quickstart: learn/tutorials/quickstart.md
-
--   Learn:
-    -   Tutorials:
-        -   Basics: learn/tutorials/tutorial0001_basics.md
-        -   HowTo / FAQ:
-            -   learn/guides/index.md
-
--   Explanations:
-    -   learn/explanation/index.md
-
--   Reference:
-    -   API Documentation:
-        -   omnipath_client:
-            -   _metadata: reference/source/omnipath_client/_metadata-docs.md
--   Community:
-    -   Join Us: community/index.md
-    -   Where to Start: community/contribute.md
-    -   Contribute to the Documentation: community/contribute-docs.md
-    -   Contribute to the Code Base: community/contribute-codebase.md
-
-
-
-#=======    Extension settings (sorted alphabetically)  =====
 markdown_extensions:
 -   admonition
 -   attr_list
 -   md_in_html
-  #----- Python Markdown Extensions
 -   pymdownx.details
 -   pymdownx.emoji:
         emoji_index: !!python/name:material.extensions.emoji.twemoji
         emoji_generator: !!python/name:material.extensions.emoji.to_svg
--   pymdownx.highlight: # Note: list of Pygments: https://pygments.org/docs/lexers/
+-   pymdownx.highlight:
         anchor_linenums: true
         line_spans: __span
         pygments_lang_class: true
@@ -84,7 +55,6 @@ markdown_extensions:
 -   pymdownx.tabbed:
         alternate_style: true
 
-#=======    Plugins    =====
 plugins:
 -   search
 -   mkdocstrings:
@@ -103,5 +73,4 @@ plugins:
                     show_signature_annotations: false
                     signature_crossrefs: true
 
-
-copyright: © Copyright 2021-2025, Saez-lab development team.
+copyright: "&copy; 2025-2026 Saez-Rodriguez group, Heidelberg University Hospital"

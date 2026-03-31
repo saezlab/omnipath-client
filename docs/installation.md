@@ -1,37 +1,56 @@
-# Installation guide
+# Installation
 
-We strongly recommend installing a few prerequisites to ensure a smooth experience. These prerequisites are:
+## Requirements
 
-1. *Python 3* (version >= 3.10)
-      - [Install Python 3](https://docs.python.org/3/using/index.html)
-2. *Poetry* (Python packaging and dependency manager)
-      - [Install Poetry](https://python-poetry.org/docs/#installation)
-3. *git* (version control manager)
-      - [Install git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-4. *Docker* (containerization technology) [optional]
-      - [Install Docker](https://docs.docker.com/engine/)
+- Python >= 3.10
 
-!!! tip "Tip"
-    If you are missing any of those pre-requisites, **please follow the installation guide in each resource before you continue**.
+## Install with pip
 
+```bash
+pip install omnipath-client
+```
 
-## Checking prerequisites
+## Install from source
 
-You can verify access to these components in your terminal:
+```bash
+pip install git+https://github.com/saezlab/omnipath-client.git
+```
 
-1. `Python` version 3.10 or higher.
-   ```bash
-   python --version
-   ```
-2. `Poetry`
-   ```bash
-   poetry --version
-   ```
-3. `git`
-   ```bash
-   git --version
-   ```
-4. `Docker`
-   ```bash
-   docker --version
-   ```
+Or for development:
+
+```bash
+git clone https://github.com/saezlab/omnipath-client.git
+cd omnipath-client
+pip install -e ".[dev,tests]"
+```
+
+## Optional dependencies
+
+omnipath-client supports multiple DataFrame backends. The default backend is
+**polars**, which must be installed separately:
+
+```bash
+pip install polars
+```
+
+For other backends:
+
+```bash
+pip install pandas    # pandas backend
+pip install pyarrow   # pyarrow backend (also required for Parquet reading)
+```
+
+For graph conversion to [annnet](https://github.com/saezlab/annnet) objects:
+
+```bash
+pip install annnet
+```
+
+## Using uv
+
+If you use [uv](https://docs.astral.sh/uv/) for dependency management:
+
+```bash
+uv add omnipath-client
+uv add polars  # or pandas, pyarrow
+```
