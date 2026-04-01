@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from omnipath_client._constants import DEFAULT_BASE_URL
+from omnipath_client._query import QueryBuilder
+from omnipath_client._types import BackendType
+from omnipath_client._session import get_logger, get_session
 from omnipath_client._download import Downloader
+from omnipath_client._response import parse_response
+from omnipath_client._constants import DEFAULT_BASE_URL
 from omnipath_client._endpoints import ParamDef, EndpointDef
 from omnipath_client._inventory import Inventory
-from omnipath_client._query import QueryBuilder
-from omnipath_client._response import parse_response
-from omnipath_client._session import get_logger, get_session
-from omnipath_client._types import BackendType
 
 
 logger = get_logger(__name__)
@@ -32,7 +32,7 @@ class OmniPath:
     def __init__(
         self,
         base_url: str = DEFAULT_BASE_URL,
-        backend: BackendType = 'polars',
+        backend: BackendType = 'auto',
         cache: bool = True,
     ) -> None:
 

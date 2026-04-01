@@ -5,6 +5,6 @@ from __future__ import annotations
 from typing import Literal
 
 
-BackendType = Literal['polars', 'pandas', 'pyarrow']
+BackendType = Literal['polars', 'pandas', 'pyarrow', 'auto']
 
 ResponseFormat = Literal['parquet', 'json']

@@ -73,6 +73,13 @@ class TestParseResponseParquet:
         assert 'parent_entity_id' in df.columns
         assert 'member_entity_id' in df.columns
 
+    def test_auto_backend(self, entities_parquet):
+
+        df = parse_response(entities_parquet, 'parquet', 'auto')
+
+        assert df is not None
+        assert hasattr(df, 'shape') or hasattr(df, 'num_rows')
+
     def test_unsupported_format(self, entities_parquet):
 
         with pytest.raises(ValueError, match='Unsupported'):
