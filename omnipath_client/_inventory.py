@@ -6,7 +6,6 @@ Loaded at import time; failure never blocks import.
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from omnipath_client._constants import (
@@ -251,12 +250,21 @@ class Inventory:
     endpoint definitions. Falls back to static definitions on failure.
     """
 
-    def __init__(self, base_url: str = DEFAULT_BASE_URL) -> None:
+    def __init__(
+        self,
+        base_url: str = DEFAULT_BASE_URL,
+        cache: bool = False,
+    ) -> None:
 
         self._base_url = base_url.rstrip('/')
+        self._cache = cache
         self._endpoints: dict[str, EndpointDef] = {}
         self._loaded = False
-        logger.debug('Created inventory for base_url=%s', self._base_url)
+        logger.debug(
+            'Created inventory for base_url=%s cache=%s',
+            self._base_url,
+            self._cache,
+        )
 
     def load(self, force_refresh: bool = False) -> None:
         """Load the inventory from the server or static fallback.
@@ -274,7 +282,7 @@ class Inventory:
             return
 
         try:
-            self._load_from_server()
+            self._load_from_server(force_refresh=force_refresh)
 
         except Exception:  # noqa: BLE001
             logger.warning(
@@ -290,18 +298,22 @@ class Inventory:
 
         self._loaded = True
 
-    def _load_from_server(self) -> None:
+    def _load_from_server(
+        self,
+        force_refresh: bool = False,
+    ) -> None:
         """Fetch and parse the OpenAPI schema from the server."""
-
-        import urllib.request
 
         url = f'{self._base_url}{OPENAPI_PATH}'
         logger.info('Fetching API schema from %s', url)
 
-        req = urllib.request.Request(url, method='GET')
+        from omnipath_client._download import Downloader
 
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode('utf-8'))
+        downloader = Downloader(use_cache=self._cache)
+        data = downloader.fetch_json(
+            url,
+            force_download=force_refresh,
+        )
 
         self._endpoints = parse_openapi(data)
         logger.info(

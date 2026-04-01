@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import json
 from pathlib import Path
 from typing import Any
 
@@ -47,27 +48,15 @@ class Downloader:
             cache_dir,
         )
 
-    def fetch(self, query: Query) -> str | io.BytesIO:
-        """Download the response for a query.
-
-        Args:
-            query:
-                A validated ``Query`` instance.
-
-        Returns:
-            Path to a cached file (str), or an in-memory buffer
-            (``io.BytesIO``) if caching is disabled.
-
-        Raises:
-            OmniPathAPIError:
-                If the server returns an error status.
-            OmniPathConnectionError:
-                If the connection fails.
-        """
-
-        url = query.resolved_url
-        method = query.endpoint.method
-        payload = query.json_body if method == 'POST' else query.query_params
+    def _download_url(
+        self,
+        url: str,
+        *,
+        method: str = 'GET',
+        payload: dict[str, Any] | None = None,
+        force_download: bool = False,
+    ) -> str | io.BytesIO:
+        """Download data from a URL using the configured cache policy."""
 
         logger.info(
             'Fetching %s %s with parameter keys=%s',
@@ -87,14 +76,18 @@ class Downloader:
                 dl_kwargs['query'] = payload
 
             dest = None if self._use_cache else False
-            result = self._dm.download(url, dest=dest, **dl_kwargs)
+            result = self._dm.download(
+                url,
+                dest=dest,
+                force_download=force_download,
+                **dl_kwargs,
+            )
 
         except Exception as e:
             message = f'Failed to download from {url}: {e}'
             logger.exception(message)
             raise OmniPathConnectionError(message) from e
 
-        # Check for HTTP errors via the downloader's state
         if hasattr(self._dm, '_last_downloader'):
             dl = self._dm._last_downloader
 
@@ -122,3 +115,59 @@ class Downloader:
         )
 
         return result
+
+    def fetch(self, query: Query) -> str | io.BytesIO:
+        """Download the response for a query.
+
+        Args:
+            query:
+                A validated ``Query`` instance.
+
+        Returns:
+            Path to a cached file (str), or an in-memory buffer
+            (``io.BytesIO``) if caching is disabled.
+
+        Raises:
+            OmniPathAPIError:
+                If the server returns an error status.
+            OmniPathConnectionError:
+                If the connection fails.
+        """
+
+        method = query.endpoint.method
+        payload = query.json_body if method == 'POST' else query.query_params
+
+        return self._download_url(
+            query.resolved_url,
+            method=method,
+            payload=payload,
+        )
+
+    def fetch_json(
+        self,
+        url: str,
+        *,
+        params: dict[str, Any] | None = None,
+        force_download: bool = False,
+    ) -> Any:
+        """Download and decode a JSON response."""
+
+        result = self._download_url(
+            url,
+            method='GET',
+            payload=params,
+            force_download=force_download,
+        )
+
+        if isinstance(result, io.BytesIO):
+            raw = result.getvalue()
+        else:
+            raw = Path(result).read_bytes()
+
+        try:
+            return json.loads(raw.decode('utf-8'))
+
+        except (UnicodeDecodeError, json.JSONDecodeError) as e:
+            message = f'Failed to decode JSON from {url}: {e}'
+            logger.exception(message)
+            raise OmniPathConnectionError(message) from e

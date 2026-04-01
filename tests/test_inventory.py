@@ -159,3 +159,89 @@ class TestInventory:
         )
 
         assert values is None
+
+    def test_loads_schema_via_downloader_without_cache_by_default(
+        self,
+        monkeypatch,
+    ):
+
+        calls = {}
+        spec = {
+            'paths': {
+                '/health': {
+                    'get': {
+                        'summary': 'Health',
+                    },
+                },
+            },
+            'components': {
+                'schemas': {},
+            },
+        }
+
+        def fake_init(self, cache_dir=None, use_cache=True):
+            calls['cache_dir'] = cache_dir
+            calls['use_cache'] = use_cache
+
+        def fake_fetch_json(self, url, *, params=None, force_download=False):
+            calls['url'] = url
+            calls['params'] = params
+            calls['force_download'] = force_download
+            return spec
+
+        monkeypatch.setattr(
+            'omnipath_client._download.Downloader.__init__',
+            fake_init,
+        )
+        monkeypatch.setattr(
+            'omnipath_client._download.Downloader.fetch_json',
+            fake_fetch_json,
+        )
+
+        inv = Inventory(base_url='https://example.org/api')
+        inv.load()
+
+        assert calls['cache_dir'] is None
+        assert calls['use_cache'] is False
+        assert calls['url'] == 'https://example.org/api/openapi.json'
+        assert calls['params'] is None
+        assert calls['force_download'] is False
+        assert 'health' in inv.endpoints
+
+    def test_force_refresh_redownloads_schema(self, monkeypatch):
+
+        calls: list[bool] = []
+        spec = {
+            'paths': {
+                '/health': {
+                    'get': {
+                        'summary': 'Health',
+                    },
+                },
+            },
+            'components': {
+                'schemas': {},
+            },
+        }
+
+        def fake_init(self, cache_dir=None, use_cache=True):
+            return None
+
+        def fake_fetch_json(self, url, *, params=None, force_download=False):
+            calls.append(force_download)
+            return spec
+
+        monkeypatch.setattr(
+            'omnipath_client._download.Downloader.__init__',
+            fake_init,
+        )
+        monkeypatch.setattr(
+            'omnipath_client._download.Downloader.fetch_json',
+            fake_fetch_json,
+        )
+
+        inv = Inventory(base_url='https://example.org/api')
+        inv.load()
+        inv.load(force_refresh=True)
+
+        assert calls == [False, True]
