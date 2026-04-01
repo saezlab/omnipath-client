@@ -166,9 +166,9 @@ OmniPathError
 
 ### 8. Config, Logging & Session (`_session.py`)
 
-**All configuration and logging uses pkg_infra (`saezlab_core`).**
+**All configuration and logging uses `pkg_infra`.**
 
-- **Config**: `saezlab_core.config.ConfigLoader.load_config()` provides
+- **Config**: `pkg_infra.config.ConfigLoader.load_config()` provides
   hierarchical OmegaConf/YAML config merged from: ecosystem -> package
   defaults -> user dir -> workdir -> env vars. omnipath-client ships a
   `default_settings.yaml` (bundled as package data under
@@ -176,15 +176,19 @@ OmniPathError
   (e.g. `omnipath_client:` with keys `base_url`, `backend`, `cache_ttl`,
   `timeout`, `retries`).
 
-- **Logging**: `saezlab_core.logger.configure_loggers_from_omegaconf()` +
-  standard `logging.getLogger(__name__)` in each module. Logging config lives
-  in the same YAML hierarchy.
+- **Logging**: `pkg_infra.logger` initializes the shared logging setup from
+  merged config, and omnipath-client modules retrieve module loggers after
+  session initialization. In the current client implementation,
+  `omnipath_client._session.get_logger()` is the local bridge that ensures
+  `pkg_infra` session/logging is initialized before returning a module logger.
 
-- **Session**: `saezlab_core.session.get_session()` singleton ties config +
-  logger + runtime metadata. The client calls this once at initialization.
+- **Session**: `pkg_infra.get_session()` / `pkg_infra.session.get_session()`
+  provides the singleton session tying together config, logger, and runtime
+  metadata. The client initializes this once and then reuses the resulting
+  logging configuration across the request workflow.
 
 **pkg_infra considerations**: The current `Settings` schema in
-`saezlab_core.schema` uses `extra="forbid"` on all models. For
+`pkg_infra.schema` uses `extra="forbid"` on all models. For
 omnipath-client to add its own config section, the schema needs to either:
 (a) allow extra fields at the top level, or (b) support a generic
 plugin/package config namespace. This is an upstream change to pkg_infra that
@@ -192,7 +196,7 @@ should be designed to work for all saezlab client packages, not just
 omnipath-client.
 
 Similarly, `ConfigLoader.read_package_default()` currently reads from
-`saezlab_core.data` — it needs to be parameterized to also read defaults
+`pkg_infra` package data — it needs to be parameterized to also read defaults
 from the calling package's data directory. This upstream generalization
 benefits all packages using pkg_infra.
 
@@ -201,8 +205,8 @@ benefits all packages using pkg_infra.
 | Package              | Work needed                                              |
 |----------------------|----------------------------------------------------------|
 | **pkg_infra**        | Generalize config schema for per-package sections;       |
-|                      | parameterize `read_package_default()` for caller package;|
-|                      | evaluate session API for client-library use              |
+|                      | parameterize package-default loading for caller package; |
+|                      | expose a stable client-library logging/session hook      |
 | **download-manager** | Add async download backend (httpx); ensure POST+JSON     |
 |                      | support                                                  |
 | **cache-manager**    | Async-compatible file I/O if needed by async download    |
@@ -220,8 +224,8 @@ benefits all packages using pkg_infra.
 
 1. `_errors.py`, `_types.py`, `_constants.py` — foundations
 2. `_endpoints.py` — dataclasses for endpoint/param definitions
-3. `_session.py` — integrate pkg_infra config/logging/session (upstream
-   updates to pkg_infra as needed)
+3. `_session.py` — integrate `pkg_infra` session/logging and add a local
+   compatibility bridge for logger access
 4. `_inventory.py` — HTML parsing now, `openapi.json` soon; load at import,
    fail silently
 5. `_query.py` — query builder with validation

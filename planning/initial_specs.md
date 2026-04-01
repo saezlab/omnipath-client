@@ -18,7 +18,7 @@ Plans to replace the old [OmniPath Python client](https://github.com/saezlab/omn
 * [Create repo from project template](https://github.com/saezlab/python-project)
 * [Cache manager](https://github.com/saezlab/cache-manager)
 * [Download manager](https://github.com/saezlab/download-manager)
-* [Logger and config manager](https://github.com/saezlab/pkg_infra)
+* [Session, logger and config manager](https://github.com/saezlab/pkg_infra)
 
 ## Further Plans
 * Evaluate options for async downloads (cache and download manager should be updatednload)
@@ -34,6 +34,9 @@ available here: https://github.com/saezlab/omnipath-present/blob/main/next-omnip
     likely doesn't exist, in this case we should create it
 - Also for logging we should use the solution in `pkg_infra`, and update it as
     required.
+- The concrete integration surface is the top-level `pkg_infra` package,
+    notably `pkg_infra.get_session()` and `pkg_infra.session` /
+    `pkg_infra.logger`, not the older `saezlab_core` module naming
 - This client package in the future should be able accommodate different
     formats and API endpoints than Parquet files, the Parquet route is our
     first default solution
