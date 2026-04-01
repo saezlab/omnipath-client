@@ -8,17 +8,17 @@ from __future__ import annotations
 
 import json
 from typing import Any
-import logging
 
 from omnipath_client._constants import (
-    OPENAPI_PATH,
     DEFAULT_BASE_URL,
+    OPENAPI_PATH,
     STATIC_ENDPOINTS,
 )
 from omnipath_client._endpoints import ParamDef, EndpointDef
+from omnipath_client._session import get_logger
 
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _param_type_from_schema(schema: dict) -> str:
@@ -155,6 +155,12 @@ def parse_openapi(spec: dict[str, Any]) -> dict[str, EndpointDef]:
     paths = spec.get('paths', {})
     endpoints: dict[str, EndpointDef] = {}
 
+    logger.debug(
+        'Parsing OpenAPI spec with %d path(s) and %d schema(s)',
+        len(paths),
+        len(schemas),
+    )
+
     for path, methods in paths.items():
         for method, details in methods.items():
             key = path.lstrip('/')
@@ -250,6 +256,7 @@ class Inventory:
         self._base_url = base_url.rstrip('/')
         self._endpoints: dict[str, EndpointDef] = {}
         self._loaded = False
+        logger.debug('Created inventory for base_url=%s', self._base_url)
 
     def load(self, force_refresh: bool = False) -> None:
         """Load the inventory from the server or static fallback.
@@ -260,6 +267,10 @@ class Inventory:
         """
 
         if self._loaded and not force_refresh:
+            logger.debug(
+                'Inventory already loaded for %s; skipping refresh',
+                self._base_url,
+            )
             return
 
         try:
@@ -272,6 +283,10 @@ class Inventory:
                 exc_info=True,
             )
             self._endpoints = _build_static_fallback()
+            logger.info(
+                'Loaded %d endpoints from static fallback',
+                len(self._endpoints),
+            )
 
         self._loaded = True
 
@@ -299,6 +314,10 @@ class Inventory:
         """All registered endpoints."""
 
         if not self._loaded:
+            logger.debug(
+                'Inventory access triggered lazy load for %s',
+                self._base_url,
+            )
             self.load()
 
         return self._endpoints

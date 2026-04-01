@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from typing import Any
-import logging
+
+from omnipath_client._session import get_logger
 
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def interactions_to_graph(df: Any) -> Any:
@@ -33,12 +34,15 @@ def interactions_to_graph(df: Any) -> Any:
 
     import polars as pl
 
+    logger.info('Converting interactions DataFrame to annnet graph')
+
     # Convert to polars if needed (annnet is polars-backed)
     if not isinstance(df, pl.DataFrame):
         import narwhals as nw
 
         nw_df = nw.from_native(df, eager_only=True)
         df = nw_df.to_native()
+        logger.debug('Converted interactions frame to polars backend')
 
     g = annnet.Graph(directed=True)
 
@@ -60,6 +64,7 @@ def interactions_to_graph(df: Any) -> Any:
             directed=row.get('is_directed', True),
         )
 
+    logger.info('Created interaction graph with %d edges', df.height)
     return g
 
 
@@ -87,11 +92,14 @@ def associations_to_graph(df: Any) -> Any:
 
     import polars as pl
 
+    logger.info('Converting associations DataFrame to annnet graph')
+
     if not isinstance(df, pl.DataFrame):
         import narwhals as nw
 
         nw_df = nw.from_native(df, eager_only=True)
         df = nw_df.to_native()
+        logger.debug('Converted associations frame to polars backend')
 
     g = annnet.Graph(directed=True)
 
@@ -112,4 +120,5 @@ def associations_to_graph(df: Any) -> Any:
             row['member_entity_id'],
         )
 
+    logger.info('Created association graph with %d edges', df.height)
     return g

@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 from typing import Any
-import logging
 
-from omnipath_client._query import QueryBuilder
-from omnipath_client._types import BackendType
-from omnipath_client._download import Downloader
-from omnipath_client._response import parse_response
 from omnipath_client._constants import DEFAULT_BASE_URL
+from omnipath_client._download import Downloader
 from omnipath_client._endpoints import ParamDef, EndpointDef
 from omnipath_client._inventory import Inventory
+from omnipath_client._query import QueryBuilder
+from omnipath_client._response import parse_response
+from omnipath_client._session import get_logger, get_session
+from omnipath_client._types import BackendType
 
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class OmniPath:
@@ -36,12 +36,20 @@ class OmniPath:
         cache: bool = True,
     ) -> None:
 
+        get_session()
+
         self._base_url = base_url.rstrip('/')
         self._backend = backend
         self._inventory = Inventory(base_url=self._base_url)
         self._inventory.load()
         self._query_builder = QueryBuilder(self._inventory)
         self._downloader = Downloader(use_cache=cache)
+        logger.info(
+            'Initialized OmniPath client with base_url=%s backend=%s cache=%s',
+            self._base_url,
+            self._backend,
+            cache,
+        )
 
     def _fetch(
         self,
@@ -51,15 +59,28 @@ class OmniPath:
     ) -> Any:
         """Internal: build query, download, parse response."""
 
+        logger.info(
+            'Starting request workflow for endpoint=%s backend=%s',
+            endpoint,
+            backend or self._backend,
+        )
         query = self._query_builder.build(endpoint, **params)
         result = self._downloader.fetch(query)
         fmt = query.endpoint.response_format
 
-        return parse_response(
+        parsed = parse_response(
             result,
             response_format=fmt,
             backend=backend or self._backend,
         )
+
+        logger.info(
+            'Completed request workflow for endpoint=%s format=%s',
+            endpoint,
+            fmt,
+        )
+
+        return parsed
 
     # --- Export endpoints ---
 
@@ -285,6 +306,7 @@ def _get_default() -> OmniPath:
     global _default_client
 
     if _default_client is None:
+        logger.info('Creating default OmniPath client singleton')
         _default_client = OmniPath()
 
     return _default_client

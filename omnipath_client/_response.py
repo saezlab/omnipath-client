@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import io
-from typing import Any
-import logging
 from pathlib import Path
+from typing import Any
 
-from omnipath_client._types import BackendType, ResponseFormat
 from omnipath_client._errors import BackendNotAvailableError
+from omnipath_client._session import get_logger
+from omnipath_client._types import BackendType, ResponseFormat
 
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _read_parquet(source: str | Path | io.BytesIO) -> Any:
@@ -19,11 +19,14 @@ def _read_parquet(source: str | Path | io.BytesIO) -> Any:
 
     import pyarrow.parquet as pq
 
+    logger.debug('Reading parquet response from %s', type(source).__name__)
     return pq.read_table(source)
 
 
 def _to_backend(table: Any, backend: BackendType) -> Any:
     """Convert a pyarrow Table to the requested backend."""
+
+    logger.debug('Converting response table to backend=%s', backend)
 
     if backend == 'pyarrow':
         return table
@@ -71,11 +74,18 @@ def parse_response(
     """
 
     if response_format == 'parquet':
+        logger.info(
+            'Parsing %s response into backend=%s',
+            response_format,
+            backend,
+        )
         table = _read_parquet(source)
         return _to_backend(table, backend)
 
     if response_format == 'json':
         import json
+
+        logger.info('Parsing JSON response')
 
         if isinstance(source, (str, Path)):
             with open(source) as f:

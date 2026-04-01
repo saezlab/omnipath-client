@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Any
-import logging
 from dataclasses import field, dataclass
+from typing import Any
 
 from omnipath_client._errors import (
+    InvalidParameterValueError,
     UnknownEndpointError,
     UnknownParameterError,
-    InvalidParameterValueError,
 )
 from omnipath_client._endpoints import EndpointDef
 from omnipath_client._inventory import Inventory
+from omnipath_client._session import get_logger
 
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -63,6 +63,13 @@ class Query:
         if filters:
             body['filters'] = filters
 
+        logger.debug(
+            'Built JSON body for %s with top-level keys=%s and filter keys=%s',
+            self.endpoint.path,
+            sorted(top_level.keys()),
+            sorted(filters.keys()),
+        )
+
         return body
 
     @property
@@ -74,6 +81,12 @@ class Query:
 
         if self.endpoint.method != 'GET':
             return {}
+
+        logger.debug(
+            'Using query parameters for %s: %s',
+            self.endpoint.path,
+            sorted(self.params.keys()),
+        )
 
         return dict(self.params)
 
@@ -107,6 +120,10 @@ class QueryBuilder:
     def __init__(self, inventory: Inventory) -> None:
 
         self._inventory = inventory
+        logger.debug(
+            'Initialized QueryBuilder with %d known endpoints',
+            len(self._inventory.endpoints),
+        )
 
     def build(
         self,
@@ -134,9 +151,16 @@ class QueryBuilder:
                 If a value is not in the allowed set.
         """
 
+        logger.info(
+            'Building query for endpoint %s with parameters=%s',
+            endpoint,
+            sorted(params.keys()),
+        )
+
         ep = self._inventory.endpoints.get(endpoint)
 
         if ep is None:
+            logger.error('Unknown endpoint requested: %s', endpoint)
             raise UnknownEndpointError(
                 f'Unknown endpoint: {endpoint!r}. '
                 f'Available: {list(self._inventory.endpoints.keys())}',
@@ -151,6 +175,11 @@ class QueryBuilder:
             pdef = ep.params.get(name)
 
             if pdef is None:
+                logger.error(
+                    'Unknown parameter %s for endpoint %s',
+                    name,
+                    endpoint,
+                )
                 raise UnknownParameterError(
                     f'Unknown parameter {name!r} for endpoint '
                     f'{endpoint!r}. '
@@ -162,6 +191,12 @@ class QueryBuilder:
                 check = value if isinstance(value, str) else str(value)
 
                 if check not in pdef.allowed_values:
+                    logger.error(
+                        'Invalid value %r for parameter %s on endpoint %s',
+                        value,
+                        name,
+                        endpoint,
+                    )
                     raise InvalidParameterValueError(
                         f'Invalid value {value!r} for parameter '
                         f'{name!r}. '
@@ -169,6 +204,12 @@ class QueryBuilder:
                     )
 
             validated[name] = value
+
+        logger.info(
+            'Validated query for endpoint %s with %d parameter(s)',
+            endpoint,
+            len(validated),
+        )
 
         return Query(
             endpoint=ep,
