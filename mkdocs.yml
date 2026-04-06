@@ -2,34 +2,43 @@ site_name: omnipath-client
 site_url: https://saezlab.github.io/omnipath-client
 theme:
     name: material
+    favicon: assets/favicon.ico
+    icon:
+        logo: material/database
     font:
-        text: Lato
-        code: Roboto Mono
+        text: Raleway
     features:
     -   content.code.copy
-    -   content.action.edit
     -   navigation.tabs
     -   navigation.instant
     -   navigation.footer
     palette:
-    -   scheme: default
-        primary: teal
-        accent: light blue
+    -   media: "(prefers-color-scheme: light)"
+        scheme: default
+        primary: custom
+        accent: custom
         toggle:
-            icon: material/toggle-switch
+            icon: material/brightness-7
             name: Switch to dark mode
-    -   scheme: slate
-        primary: teal
-        accent: light blue
+    -   media: "(prefers-color-scheme: dark)"
+        scheme: slate
+        primary: custom
+        accent: custom
         toggle:
-            icon: material/toggle-switch-off
+            icon: material/brightness-4
             name: Switch to light mode
+
+extra_css:
+-   assets/omnipath-theme.css
 
 nav:
 -   Home: index.md
 -   Installation: installation.md
 -   Quickstart: quickstart.md
--   Vignettes: vignettes/index.md
+-   Vignettes:
+    -   Overview: vignettes/index.md
+    -   OmniPath Utils: vignettes/utils.md
+    -   OmniPath Database: vignettes/database.md
 -   API Reference: reference/index.md
 -   About: about.md
 

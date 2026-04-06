@@ -87,3 +87,95 @@
     options:
         show_source: false
         members_order: source
+
+---
+
+## Utils: ID Translation
+
+::: omnipath_client.utils.map_name
+    options:
+        show_source: false
+
+::: omnipath_client.utils.map_names
+    options:
+        show_source: false
+
+::: omnipath_client.utils.map_name0
+    options:
+        show_source: false
+
+::: omnipath_client.utils.translate
+    options:
+        show_source: false
+
+::: omnipath_client.utils.translate_column
+    options:
+        show_source: false
+
+::: omnipath_client.utils.translate_columns
+    options:
+        show_source: false
+
+::: omnipath_client.utils.id_types
+    options:
+        show_source: false
+
+## Utils: Taxonomy
+
+::: omnipath_client.utils.resolve_organism
+    options:
+        show_source: false
+
+::: omnipath_client.utils.ensure_ncbi_tax_id
+    options:
+        show_source: false
+
+::: omnipath_client.utils.ensure_common_name
+    options:
+        show_source: false
+
+::: omnipath_client.utils.ensure_latin_name
+    options:
+        show_source: false
+
+::: omnipath_client.utils.all_organisms
+    options:
+        show_source: false
+
+## Utils: Orthology
+
+::: omnipath_client.utils.orthology_translate
+    options:
+        show_source: false
+
+::: omnipath_client.utils.orthology_translate_column
+    options:
+        show_source: false
+
+## Utils: Reference Lists
+
+::: omnipath_client.utils.get_reflist
+    options:
+        show_source: false
+
+::: omnipath_client.utils.all_swissprots
+    options:
+        show_source: false
+
+::: omnipath_client.utils._reflists.all_trembls
+    options:
+        show_source: false
+
+::: omnipath_client.utils.is_swissprot
+    options:
+        show_source: false
+
+## Utils: Configuration
+
+::: omnipath_client.utils._base.set_utils_url
+    options:
+        show_source: false
+
+::: omnipath_client.utils._base.get_utils_url
+    options:
+        show_source: false

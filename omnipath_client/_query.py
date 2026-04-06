@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import field, dataclass
 from typing import Any
+from dataclasses import field, dataclass
 
 from omnipath_client._errors import (
-    InvalidParameterValueError,
     UnknownEndpointError,
     UnknownParameterError,
+    InvalidParameterValueError,
 )
+from omnipath_client._session import get_logger
 from omnipath_client._endpoints import EndpointDef
 from omnipath_client._inventory import Inventory
-from omnipath_client._session import get_logger
 
 
 logger = get_logger(__name__)

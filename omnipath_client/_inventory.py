@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from omnipath_client._session import get_logger
 from omnipath_client._constants import (
-    DEFAULT_BASE_URL,
     OPENAPI_PATH,
+    DEFAULT_BASE_URL,
     STATIC_ENDPOINTS,
 )
 from omnipath_client._endpoints import ParamDef, EndpointDef
-from omnipath_client._session import get_logger
 
 
 logger = get_logger(__name__)
