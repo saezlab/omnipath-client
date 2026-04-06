@@ -14,10 +14,12 @@ Example::
 
 from omnipath_client.utils._mapping import (
     id_types,
+    identify,
     map_name,
     map_name0,
     map_names,
     translate,
+    all_mappings,
     translate_column,
     translate_columns,
 )

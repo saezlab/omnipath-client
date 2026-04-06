@@ -243,3 +243,35 @@ def id_types() -> list[dict]:
     """List all supported ID types."""
 
     return _get('/mapping/id-types')
+
+
+def identify(
+    identifiers: list[str],
+    ncbi_tax_id: int = 9606,
+) -> dict[str, list[dict]]:
+    """Identify the type of given identifiers."""
+
+    return _get(
+        '/mapping/identify',
+        {
+            'identifiers': ','.join(identifiers),
+            'ncbi_tax_id': ncbi_tax_id,
+        },
+    ).get('results', {})
+
+
+def all_mappings(
+    identifiers: list[str],
+    id_type: str,
+    ncbi_tax_id: int = 9606,
+) -> dict[str, dict[str, list[str]]]:
+    """Get all known mappings for identifiers."""
+
+    return _get(
+        '/mapping/all',
+        {
+            'identifiers': ','.join(identifiers),
+            'id_type': id_type,
+            'ncbi_tax_id': ncbi_tax_id,
+        },
+    ).get('results', {})

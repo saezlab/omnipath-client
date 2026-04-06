@@ -283,6 +283,65 @@ class TestOrthologyExtra:
         assert call_params.get('min_sources') == 3
 
 
+
+class TestIdentify:
+
+    @patch('omnipath_client.utils._mapping._get')
+    def test_identify(self, mock_get):
+        mock_get.return_value = {
+            'results': {
+                'P04637': [
+                    {'id_type': 'uniprot', 'role': 'source', 'mappings_count': 5},
+                ],
+            },
+            'meta': {'ncbi_tax_id': 9606, 'total_input': 1},
+        }
+        from omnipath_client.utils import identify
+
+        result = identify(['P04637'])
+        assert 'P04637' in result
+        assert result['P04637'][0]['id_type'] == 'uniprot'
+
+    @patch('omnipath_client.utils._mapping._get')
+    def test_identify_params(self, mock_get):
+        mock_get.return_value = {'results': {}, 'meta': {}}
+        from omnipath_client.utils import identify
+
+        identify(['P04637', 'HMDB0000001'], ncbi_tax_id=10090)
+        call_params = mock_get.call_args[0][1]
+        assert call_params['identifiers'] == 'P04637,HMDB0000001'
+        assert call_params['ncbi_tax_id'] == 10090
+
+
+class TestAllMappings:
+
+    @patch('omnipath_client.utils._mapping._get')
+    def test_all_mappings(self, mock_get):
+        mock_get.return_value = {
+            'results': {
+                'P04637': {'genesymbol': ['TP53'], 'entrez': ['7157']},
+            },
+            'meta': {},
+        }
+        from omnipath_client.utils import all_mappings
+
+        result = all_mappings(['P04637'], 'uniprot')
+        assert 'P04637' in result
+        assert 'genesymbol' in result['P04637']
+        assert result['P04637']['genesymbol'] == ['TP53']
+
+    @patch('omnipath_client.utils._mapping._get')
+    def test_all_mappings_params(self, mock_get):
+        mock_get.return_value = {'results': {}, 'meta': {}}
+        from omnipath_client.utils import all_mappings
+
+        all_mappings(['P04637'], 'uniprot', ncbi_tax_id=10090)
+        call_params = mock_get.call_args[0][1]
+        assert call_params['identifiers'] == 'P04637'
+        assert call_params['id_type'] == 'uniprot'
+        assert call_params['ncbi_tax_id'] == 10090
+
+
 class TestDownloadImportFix:
     """Verify the dlmachine import fix."""
 
