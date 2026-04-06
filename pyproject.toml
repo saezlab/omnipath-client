@@ -16,8 +16,8 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
 dependencies = [
-    "pkg_infra @ git+https://github.com/saezlab/pkg_infra.git@main",
-    "dlmachine @ git+https://github.com/saezlab/download-manager.git@main",
+    "pkg-infra>=0.1.0",
+    "dlmachine>=0.0.2",
     "requests>=2.25",
     "narwhals>=1.9",
 ]
