@@ -1,70 +1,87 @@
-# OmniPath Client — Instructions for AI Assistants
+# AGENTS.md — omnipath-client Development Guide
 
-You are working on `omnipath-client`, the new Python client for the OmniPath
-molecular biology prior-knowledge web API.
+## Project Overview
 
-## Architecture plan
+omnipath-client is the Python client for OmniPath web services:
+1. **OmniPath Database** — protein interactions, annotations, complexes
+   (served by omnipath-present at dev.omnipathdb.org)
+2. **OmniPath Utils** — ID translation, taxonomy, orthology, reference lists
+   (served by omnipath-utils at utils.omnipathdb.org)
 
-Read `planning/architecture.md` for the full architecture plan: module
-structure, data flow, component descriptions, and implementation order.
-The initial specifications are in `planning/initial_specs.md`.
+**Key facts:**
+- Python 3.10+, Hatchling build, BSD-3-Clause license
+- PyPI: `pip install omnipath-client`
+- The lightweight way for users to access OmniPath — no database setup needed
 
-## The web API
+## Architecture
 
-- **Production**: https://dev.omnipathdb.org/
-- **API docs** (rendered): https://dev.omnipathdb.org/api-docs
-- **Server repo**: https://github.com/saezlab/omnipath-present
-- **Run locally**:
-  ```
-  git clone git@github.com:saezlab/omnipath-present.git
-  cd omnipath-present/api-service
-  uv sync
-  uv run uvicorn api_service.main:app --reload --port 8081
-  curl http://localhost:8081/openapi.json
-  ```
+```
+omnipath_client/
+├── __init__.py        # Public API: OmniPath, entities, interactions, etc.
+├── _client.py         # OmniPath class + module-level convenience functions
+├── _query.py          # QueryBuilder for the database API
+├── _inventory.py      # Auto-populated endpoint definitions from OpenAPI
+├── _download.py       # Downloader (wraps dlmachine)
+├── _response.py       # Response parsing (Parquet, JSON → DataFrame)
+├── _graph.py          # DataFrame → annnet.Graph conversion
+├── _endpoints.py      # EndpointDef + ParamDef dataclasses
+├── _errors.py         # Exception hierarchy
+├── _constants.py      # Base URLs, defaults
+├── _types.py          # Type aliases
+├── _session.py        # pkg_infra session
+├── _metadata.py       # Version
+└── utils/             # OmniPath Utils client
+    ├── __init__.py    # Re-exports all utils functions
+    ├── _base.py       # HTTP client (GET/POST to utils.omnipathdb.org)
+    ├── _mapping.py    # ID translation: map_name, translate, translate_column
+    ├── _taxonomy.py   # Taxonomy: ensure_ncbi_tax_id, resolve_organism
+    ├── _orthology.py  # Orthology: translate, translate_column
+    └── _reflists.py   # Reference lists: get_reflist, is_swissprot
+```
 
-The API uses POST endpoints returning Parquet files. A standard
-`openapi.json` will be available soon; until then the HTML API docs page
-is the reference.
+## Utils module
 
-## Related local repositories
+The `utils` module mirrors the omnipath-utils Python API exactly:
 
-| Package | Local path | Purpose |
-|---------|-----------|---------|
-| **saezverse** | `/home/denes/saezverse/` | Architecture repo: coding conventions, package descriptions, ADRs, plans |
-| **pkg_infra** (saezlab_core) | `/home/denes/pypath-new/pkg_infra/` | Config, logging, and session infrastructure for all saezlab packages |
-| **download-manager** | — | Cache-aware download manager ([GitHub](https://github.com/saezlab/download-manager)) |
-| **cache-manager** | — | SQLite-backed file caching ([GitHub](https://github.com/saezlab/cache-manager)) |
-| **annnet** | — | Annotated network/graph library, Polars-backed ([GitHub](https://github.com/saezlab/annnet)) |
-| **omnipath** (old client) | — | Legacy Python client being replaced ([GitHub](https://github.com/saezlab/omnipath)) |
+```python
+from omnipath_client.utils import (
+    map_name, translate_column,  # ID translation
+    ensure_ncbi_tax_id,          # Taxonomy
+    orthology_translate,         # Orthology
+    is_swissprot,                # Reference lists
+    identify, all_mappings,      # Discovery
+)
+```
 
-## Key dependencies
+All functions make HTTP calls to utils.omnipathdb.org. DataFrame functions
+use narwhals for pandas/polars/pyarrow support.
 
-- **pkg_infra (`saezlab_core`)** — all config, logging, and session management
-  must go through this package. Source at
-  `/home/denes/pypath-new/pkg_infra/saezlab_core/`. Uses OmegaConf YAML
-  hierarchy for config, Python `dictConfig` for logging, and a singleton
-  `Session` object. If it lacks features needed by this client, contribute
-  upstream rather than building parallel solutions.
-- **download-manager** — wraps HTTP downloads with cache-manager integration.
-  Async support is a goal (not yet implemented).
-- **narwhals** — dataframe compatibility layer. Default backend is **polars**.
-- **annnet** — for converting interaction/association data to graph objects.
+Custom URL: `from omnipath_client.utils._base import set_utils_url`
 
-## Coding conventions
+## Database API
 
-Follow the saezlab Python coding style documented in
-`/home/denes/saezverse/human/guidelines/python-coding-style.md`. Key points:
+```python
+import omnipath_client as op
+df = op.interactions(entity_ids = ['Q9Y6K9'])
+df = op.entities(entity_types = ['protein'])
+```
 
-- Spaces around `=` in keyword arguments and default values
-- Blank lines inside functions before/after blocks and between logical segments
-- Argument lists on multiple lines: opening paren on first line, each arg on
-  its own line, trailing comma, closing paren at original indentation
-- Single quotes for strings
-- Google (Napoleon) docstring style with triple quotes on separate lines
-- Resource names as single words without underscores
+The database API auto-populates endpoint definitions from the server's
+API schema (OpenAPI JSON or HTML parsing fallback), validates query
+parameters, and delivers results as Parquet by default. Supports polars,
+pandas, and pyarrow backends, and optional conversion to annnet Graph
+objects.
 
-## Package description
+## Dependencies
+- `pkg-infra` — logging, config
+- `dlmachine` — downloads + caching
+- `narwhals` — DataFrame ops
+- `requests` — HTTP (for utils module)
 
-The saezverse package description for this client is at
-`/home/denes/saezverse/human/packages/omnipath-client.md`.
+## Testing
+```bash
+uv sync
+uv run pytest tests/ -v
+```
+
+55 tests, all use mocks (no live HTTP).
