@@ -1,44 +1,51 @@
 # omnipath-client
 
-Python client for the [OmniPath](https://omnipathdb.org/) molecular biology
-prior-knowledge web API.
+Python client for the OmniPath web services.
 
-omnipath-client provides validated, cache-aware access to the OmniPath API,
-delivering results as [polars](https://pola.rs/),
-[pandas](https://pandas.pydata.org/), or
-[pyarrow](https://arrow.apache.org/docs/python/) DataFrames. Network data
-can optionally be returned as [annnet](https://github.com/saezlab/annnet)
-graph objects.
+## Services
 
-## Features
+### OmniPath Database
+Query protein interactions, annotations, complexes, and more from the
+[OmniPath database](https://omnipathdb.org).
 
-- **Export endpoints** for entities, interactions, and associations (complexes,
-  pathways, reactions)
-- **Ontology endpoints** for term lookup, search, and hierarchy trees
-- **Multi-backend** DataFrame output: polars (default), pandas, pyarrow
-- **Query validation** against the API schema (endpoint names, parameter names,
-  enum values)
-- **Caching** of downloaded data via
-  [download-manager](https://github.com/saezlab/download-manager)
-- **Graph conversion** to [annnet](https://github.com/saezlab/annnet) objects
-  for network data
+### OmniPath Utils
+ID translation, taxonomy, orthology, and reference lists via the
+[utils service](https://utils.omnipathdb.org).
 
-## Quick example
+## Quick Start
 
+```bash
+pip install omnipath-client
+```
+
+### ID Translation
+```python
+from omnipath_client.utils import map_name, translate_column
+
+map_name('TP53', 'genesymbol', 'uniprot')
+# {'P04637'}
+
+# Translate DataFrame column (pandas, polars, or pyarrow)
+translate_column(df, 'gene', 'genesymbol', 'uniprot')
+```
+
+### Taxonomy
+```python
+from omnipath_client.utils import ensure_ncbi_tax_id
+ensure_ncbi_tax_id('human')  # 9606
+```
+
+### Orthology
+```python
+from omnipath_client.utils import orthology_translate
+orthology_translate(['TP53'], source=9606, target=10090)
+# {'TP53': {'Trp53'}}
+```
+
+### OmniPath Database
 ```python
 import omnipath_client as op
-
-# Get all interactions as a polars DataFrame
-df = op.interactions()
-
-# Filter by direction
-df = op.interactions(direction='directed')
-
-# Get entities for a specific organism
-df = op.entities(taxonomy_ids=['9606'])
-
-# Return interactions as an annnet graph
-g = op.interactions(as_graph=True)
+df = op.interactions(entity_ids=['Q9Y6K9'])
 ```
 
 ## Getting started

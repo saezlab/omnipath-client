@@ -61,6 +61,32 @@ df = op.entities(backend='pandas')
 
 For more examples, see the [quickstart guide](https://saezlab.github.io/omnipath-client/quickstart/).
 
+## OmniPath Utils
+
+The client provides access to the [OmniPath Utils](https://utils.omnipathdb.org)
+service for ID translation, taxonomy, and orthology:
+
+```python
+from omnipath_client.utils import (
+    map_name,           # translate identifiers
+    translate_column,   # translate DataFrame columns
+    ensure_ncbi_tax_id, # resolve organism names
+    orthology_translate, # cross-species translation
+)
+
+# Gene symbol to UniProt
+map_name('TP53', 'genesymbol', 'uniprot')  # {'P04637'}
+
+# Organism resolution
+ensure_ncbi_tax_id('mouse')  # 10090
+
+# Cross-species translation
+orthology_translate(['TP53'], source=9606, target=10090)
+# {'TP53': {'Trp53'}}
+```
+
+Full API: [utils.omnipathdb.org](https://utils.omnipathdb.org)
+
 ## Documentation
 
 Full documentation: [saezlab.github.io/omnipath-client](https://saezlab.github.io/omnipath-client/)
