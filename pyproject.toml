@@ -17,7 +17,8 @@ classifiers = [
 ]
 dependencies = [
     "pkg_infra @ git+https://github.com/saezlab/pkg_infra.git@main",
-    "download-manager @ git+https://github.com/saezlab/download-manager.git@main",
+    "dlmachine @ git+https://github.com/saezlab/download-manager.git@main",
+    "requests>=2.25",
     "narwhals>=1.9",
 ]
 

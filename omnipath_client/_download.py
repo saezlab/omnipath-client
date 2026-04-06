@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import io
 import json
-from pathlib import Path
 from typing import Any
+from pathlib import Path
 
+from omnipath_client._query import Query
 from omnipath_client._errors import (
     OmniPathAPIError,
     OmniPathConnectionError,
 )
-from omnipath_client._query import Query
 from omnipath_client._session import get_logger
 
 
@@ -21,8 +21,8 @@ logger = get_logger(__name__)
 class Downloader:
     """Handles downloads from the OmniPath API with caching.
 
-    Uses ``download_manager.DownloadManager`` for HTTP requests and
-    ``cache_manager`` for local caching of responses.
+    Uses ``dlmachine.DownloadManager`` for HTTP requests and
+    ``cachedir`` for local caching of responses.
     """
 
     def __init__(
@@ -31,7 +31,7 @@ class Downloader:
         use_cache: bool = True,
     ) -> None:
 
-        from download_manager import DownloadManager
+        from dlmachine import DownloadManager
 
         dm_kwargs: dict[str, Any] = {}
 

@@ -28,6 +28,7 @@ __all__ = [
     'ontologies',
 ]
 
+from omnipath_client import utils
 from ._client import (
     OmniPath,
     entities,
