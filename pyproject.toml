@@ -16,7 +16,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
 dependencies = [
-    "pkg-infra>=0.2.0",
+    "pkg-infra>=0.1.0",
     "dlmachine>=0.0.2",
     "requests>=2.25",
     "narwhals>=1.9",
