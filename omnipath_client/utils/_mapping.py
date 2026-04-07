@@ -246,10 +246,13 @@ def id_types() -> list[dict]:
 
 
 def identify(
-    identifiers: list[str],
+    identifiers: str | list[str],
     ncbi_tax_id: int = 9606,
 ) -> dict[str, list[dict]]:
     """Identify the type of given identifiers."""
+
+    if isinstance(identifiers, str):
+        identifiers = [identifiers]
 
     return _get(
         '/mapping/identify',
@@ -261,11 +264,14 @@ def identify(
 
 
 def all_mappings(
-    identifiers: list[str],
+    identifiers: str | list[str],
     id_type: str,
     ncbi_tax_id: int = 9606,
 ) -> dict[str, dict[str, list[str]]]:
     """Get all known mappings for identifiers."""
+
+    if isinstance(identifiers, str):
+        identifiers = [identifiers]
 
     return _get(
         '/mapping/all',
