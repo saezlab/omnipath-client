@@ -379,3 +379,60 @@ def ontologies() -> Any:
     """
 
     return _get_default().ontologies()
+
+
+def endpoints() -> dict[str, EndpointDef]:
+    """List all available API endpoints.
+
+    Returns:
+        Dict mapping endpoint paths to EndpointDef objects.
+
+    Example::
+
+        import omnipath_client as op
+        for path, ep in op.endpoints().items():
+            print(f'{ep.method} {path}: {ep.summary}')
+    """
+
+    return _get_default().endpoint_registry
+
+
+def params(endpoint: str) -> dict[str, ParamDef]:
+    """Get parameters for an endpoint.
+
+    Args:
+        endpoint: Endpoint path (e.g. 'exports/interactions').
+
+    Returns:
+        Dict mapping parameter names to ParamDef objects with
+        name, type, required, allowed_values, and description.
+
+    Example::
+
+        import omnipath_client as op
+        for name, p in op.params('exports/interactions').items():
+            vals = p.allowed_values or []
+            print(f'{name}: {p.param_type}, required={p.required}, values={vals[:5]}')
+    """
+
+    return _get_default().params(endpoint)
+
+
+def values(endpoint: str, param: str) -> list[str] | None:
+    """Get allowed values for a parameter on an endpoint.
+
+    Args:
+        endpoint: Endpoint path.
+        param: Parameter name.
+
+    Returns:
+        List of allowed values, or None if any value is accepted.
+
+    Example::
+
+        import omnipath_client as op
+        op.values('exports/interactions', 'entity_types')
+        # ['protein', 'complex', 'mirna', ...]
+    """
+
+    return _get_default().values(endpoint, param)

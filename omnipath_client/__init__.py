@@ -26,12 +26,18 @@ __all__ = [
     'ontology_tree',
     'search_terms',
     'ontologies',
+    'endpoints',
+    'params',
+    'values',
 ]
 
 from omnipath_client import utils
 from ._client import (
     OmniPath,
+    params,
+    values,
     entities,
+    endpoints,
     ontologies,
     associations,
     interactions,

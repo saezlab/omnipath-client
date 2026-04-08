@@ -354,3 +354,19 @@ class TestDownloadImportFix:
         source = inspect.getsource(_download)
         assert 'from dlmachine import' in source
         assert 'from download_manager import' not in source
+
+
+class TestIntrospection:
+    """Test endpoint introspection functions."""
+
+    def test_endpoints_importable(self):
+        from omnipath_client import endpoints
+        assert callable(endpoints)
+
+    def test_params_importable(self):
+        from omnipath_client import params
+        assert callable(params)
+
+    def test_values_importable(self):
+        from omnipath_client import values
+        assert callable(values)
