@@ -18,10 +18,15 @@ from omnipath_client.utils import (
     map_names,
     translate,
     translate_column,
+    translation_dict,
+    translation_df,
     id_types,
     ensure_ncbi_tax_id,
     all_organisms,
+    organisms_df,
     orthology_translate,
+    orthology_dict,
+    orthology_df,
     get_reflist,
     is_swissprot,
 )
@@ -55,6 +60,24 @@ map_names(['TP53', 'EGFR', 'BRCA1'], 'genesymbol', 'uniprot')
 # Returns per-identifier results
 translate(['TP53', 'EGFR', 'BRCA1'], 'genesymbol', 'uniprot')
 # {'TP53': {'P04637'}, 'EGFR': {'P00533'}, 'BRCA1': {'P38398'}}
+```
+
+### Full translation tables
+
+Download a complete ID mapping table as a dict or DataFrame:
+
+```python
+from omnipath_client.utils import translation_dict, translation_df
+
+# Full genesymbol -> uniprot table as dict
+table = translation_dict('genesymbol', 'uniprot')
+table['TP53']  # {'P04637'}
+
+# Or as a DataFrame
+df = translation_df('genesymbol', 'uniprot')
+
+# Translate only specific IDs
+table = translation_dict('genesymbol', 'uniprot', identifiers=['TP53', 'EGFR'])
 ```
 
 ### Translate a DataFrame column
@@ -133,6 +156,15 @@ organisms = all_organisms()
 # [{'ncbi_tax_id': 9606, 'common_name': 'human', ...}, ...]
 ```
 
+### Organisms as DataFrame
+
+```python
+from omnipath_client.utils import organisms_df
+
+df = organisms_df()              # all organisms
+df = organisms_df(has_data=True) # only organisms with mapping data
+```
+
 ## Orthology
 
 ### Cross-species gene translation
@@ -147,6 +179,25 @@ orthology_translate(['TP53'], source=9606, target=10090, min_sources=5)
 
 # Force a specific resource
 orthology_translate(['TP53'], source=9606, target=10090, resource='oma')
+```
+
+### Full orthology tables
+
+Download a complete orthology table:
+
+```python
+from omnipath_client.utils import orthology_dict, orthology_df
+
+# Full human-to-mouse orthology as dict
+table = orthology_dict(source=9606, target=10090)
+
+# Or as a DataFrame
+df = orthology_df(source=9606, target=10090)
+
+# Translate only specific IDs
+table = orthology_dict(
+    source=9606, target=10090, identifiers=['TP53', 'EGFR'],
+)
 ```
 
 ### Translate DataFrame column to orthologs

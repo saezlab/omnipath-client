@@ -65,7 +65,7 @@ def organisms_df(has_data: bool = False) -> Any:
     try:
         import polars as pl
 
-        return pl.DataFrame(data)
+        return pl.DataFrame(data, infer_schema_length=None)
     except ImportError:
         pass
 

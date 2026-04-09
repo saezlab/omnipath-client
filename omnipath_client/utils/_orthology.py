@@ -128,64 +128,92 @@ def translate_column(
 
 
 def orthology_dict(
-    identifiers: str | list[str],
     source: int = 9606,
     target: int = 10090,
     id_type: str = 'genesymbol',
+    identifiers: str | list[str] | None = None,
     resource: str | None = None,
     min_sources: int = 1,
     raw: bool = False,
 ) -> dict[str, set[str]]:
     """Get orthology data as a dict.
 
+    Downloads the full orthology table by default. If identifiers are
+    given, translates only those.
+
     Example::
 
-        table = orthology_dict(['TP53', 'EGFR'], source=9606, target=10090)
+        # Full table
+        table = orthology_dict(source=9606, target=10090)
+
+        # Specific IDs only
+        table = orthology_dict(
+            source=9606, target=10090, identifiers=['TP53', 'EGFR'],
+        )
         table['TP53']  # {'Trp53'}
     """
 
-    if isinstance(identifiers, str):
-        identifiers = [identifiers]
+    if identifiers is not None:
+        if isinstance(identifiers, str):
+            identifiers = [identifiers]
 
-    return translate(
-        identifiers,
-        source=source,
-        target=target,
-        id_type=id_type,
-        resource=resource,
-        min_sources=min_sources,
-        raw=raw,
-    )
+        return translate(
+            identifiers,
+            source=source,
+            target=target,
+            id_type=id_type,
+            resource=resource,
+            min_sources=min_sources,
+            raw=raw,
+        )
+
+    # Full table download
+    params: dict = {
+        'source': source,
+        'target': target,
+        'id_type': id_type,
+    }
+
+    if resource:
+        params['resource'] = resource
+
+    data = _get('/orthology/table', params)
+    table = data.get('table', {})
+
+    return {k: set(v) for k, v in table.items()}
 
 
 def orthology_df(
-    identifiers: str | list[str],
     source: int = 9606,
     target: int = 10090,
     id_type: str = 'genesymbol',
+    identifiers: str | list[str] | None = None,
     resource: str | None = None,
     min_sources: int = 1,
     raw: bool = False,
 ) -> Any:
     """Get orthology data as a DataFrame.
 
+    Downloads the full table by default. Returns a two-column DataFrame.
+
     Example::
 
-        df = orthology_df(['TP53', 'EGFR'], source=9606, target=10090)
+        df = orthology_df(source=9606, target=10090)
+        # Full orthology table as DataFrame
     """
 
-    if isinstance(identifiers, str):
-        identifiers = [identifiers]
-
-    trans = translate(
-        identifiers,
+    trans = orthology_dict(
         source=source,
         target=target,
         id_type=id_type,
+        identifiers=identifiers,
         resource=resource,
         min_sources=min_sources,
         raw=raw,
     )
+
+    src_col = f'{id_type}_{source}'
+    tgt_col = f'{id_type}_{target}'
 
     src_vals: list[str] = []
     tgt_vals: list[str] = []
@@ -194,9 +222,6 @@ def orthology_df(
         for tgt in sorted(targets):
             src_vals.append(src)
             tgt_vals.append(tgt)
-
-    src_col = f'{id_type}_{source}'
-    tgt_col = f'{id_type}_{target}'
 
     try:
         import polars as pl

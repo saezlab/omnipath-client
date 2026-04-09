@@ -284,20 +284,23 @@ def all_mappings(
 
 
 def translation_dict(
-    identifiers: str | list[str],
     id_type: str,
     target_id_type: str,
     ncbi_tax_id: int = 9606,
+    identifiers: str | list[str] | None = None,
     raw: bool = False,
     backend: str | None = None,
 ) -> dict[str, set[str]]:
     """Get translation data as a dict.
 
+    Downloads the full translation table by default. If identifiers are
+    given, translates only those.
+
     Args:
-        identifiers: Source IDs to translate. String or list.
         id_type: Source ID type.
         target_id_type: Target ID type.
         ncbi_tax_id: Organism (default: 9606).
+        identifiers: Optional list of source IDs. None = full table.
         raw: Skip special-case handling.
         backend: Force specific backend.
 
@@ -306,52 +309,71 @@ def translation_dict(
 
     Example::
 
-        table = translation_dict(['TP53', 'EGFR'], 'genesymbol', 'uniprot')
+        # Full table
+        table = translation_dict('genesymbol', 'uniprot')
         table['TP53']  # {'P04637'}
+
+        # Specific IDs only
+        table = translation_dict(
+            'genesymbol', 'uniprot', identifiers=['TP53', 'EGFR'],
+        )
     """
 
-    if isinstance(identifiers, str):
-        identifiers = [identifiers]
+    if identifiers is not None:
+        if isinstance(identifiers, str):
+            identifiers = [identifiers]
 
-    return translate(
-        identifiers,
-        id_type,
-        target_id_type,
-        ncbi_tax_id,
-        raw=raw,
-        backend=backend,
-    )
+        return translate(
+            identifiers,
+            id_type,
+            target_id_type,
+            ncbi_tax_id,
+            raw=raw,
+            backend=backend,
+        )
+
+    # Full table download
+    data = _get('/mapping/table', {
+        'id_type': id_type,
+        'target_id_type': target_id_type,
+        'ncbi_tax_id': ncbi_tax_id,
+    })
+    table = data.get('table', {})
+
+    return {k: set(v) for k, v in table.items()}
 
 
 def translation_df(
-    identifiers: str | list[str],
     id_type: str,
     target_id_type: str,
     ncbi_tax_id: int = 9606,
+    identifiers: str | list[str] | None = None,
     raw: bool = False,
     backend: str | None = None,
 ) -> Any:
     """Get translation data as a DataFrame.
 
-    Returns a two-column DataFrame with source and target IDs.
-    Prefers polars; falls back to pandas.
+    Downloads the full table by default. Returns a two-column DataFrame.
+
+    Args:
+        id_type: Source ID type.
+        target_id_type: Target ID type.
+        ncbi_tax_id: Organism (default: 9606).
+        identifiers: Optional list of source IDs. None = full table.
+        raw: Skip special-case handling.
+        backend: Force specific backend.
 
     Example::
 
-        df = translation_df(['TP53', 'EGFR'], 'genesymbol', 'uniprot')
-        #   genesymbol   uniprot
-        # 0       TP53   P04637
-        # 1       EGFR   P00533
+        df = translation_df('genesymbol', 'uniprot')
+        # Full genesymbol -> uniprot table as DataFrame
     """
 
-    if isinstance(identifiers, str):
-        identifiers = [identifiers]
-
-    trans = translate(
-        identifiers,
+    trans = translation_dict(
         id_type,
         target_id_type,
         ncbi_tax_id,
+        identifiers=identifiers,
         raw=raw,
         backend=backend,
     )
