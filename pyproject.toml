@@ -30,7 +30,7 @@ maintainers = [
 name = "omnipath-client"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.2.2"
+version = "0.2.3"
 
 [project.optional-dependencies]
 polars = ["polars>=0.20.0"]
@@ -52,7 +52,7 @@ tests = [
     "pytest>=6.0",
     "pytest-cov",
     "coverage>=6.0",
-    "codecov-cli>=10.2.2",
+    "codecov-cli>=10.2.3",
     "diff_cover",
     "ruff",
     "polars>=0.20.0",
