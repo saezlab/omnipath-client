@@ -370,3 +370,81 @@ class TestIntrospection:
     def test_values_importable(self):
         from omnipath_client import values
         assert callable(values)
+
+
+class TestTranslationData:
+
+    @patch('omnipath_client.utils._mapping._get')
+    def test_translation_dict(self, mock_get):
+        mock_get.return_value = {
+            'results': {'TP53': ['P04637']},
+            'unmapped': [],
+            'meta': {},
+        }
+        from omnipath_client.utils import translation_dict
+
+        result = translation_dict('TP53', 'genesymbol', 'uniprot')
+        assert result == {'TP53': {'P04637'}}
+
+    @patch('omnipath_client.utils._mapping._get')
+    def test_translation_dict_list(self, mock_get):
+        mock_get.return_value = {
+            'results': {'TP53': ['P04637'], 'EGFR': ['P00533']},
+            'unmapped': [],
+            'meta': {},
+        }
+        from omnipath_client.utils import translation_dict
+
+        result = translation_dict(['TP53', 'EGFR'], 'genesymbol', 'uniprot')
+        assert 'TP53' in result
+        assert 'EGFR' in result
+
+    @patch('omnipath_client.utils._mapping._get')
+    def test_translation_df(self, mock_get):
+        mock_get.return_value = {
+            'results': {'TP53': ['P04637']},
+            'unmapped': [],
+            'meta': {},
+        }
+        from omnipath_client.utils import translation_df
+
+        result = translation_df('TP53', 'genesymbol', 'uniprot')
+        assert hasattr(result, 'columns') or hasattr(result, 'schema')
+
+
+class TestOrthologyData:
+
+    @patch('omnipath_client.utils._orthology._get')
+    def test_orthology_dict(self, mock_get):
+        mock_get.return_value = {
+            'results': {'TP53': ['Trp53']},
+            'unmapped': [],
+            'meta': {},
+        }
+        from omnipath_client.utils import orthology_dict
+
+        result = orthology_dict('TP53', source=9606, target=10090)
+        assert result == {'TP53': {'Trp53'}}
+
+    @patch('omnipath_client.utils._orthology._get')
+    def test_orthology_df(self, mock_get):
+        mock_get.return_value = {
+            'results': {'TP53': ['Trp53']},
+            'unmapped': [],
+            'meta': {},
+        }
+        from omnipath_client.utils import orthology_df
+
+        result = orthology_df('TP53', source=9606, target=10090)
+        assert hasattr(result, 'columns') or hasattr(result, 'schema')
+
+
+class TestTaxonomyDf:
+
+    @patch('omnipath_client.utils._taxonomy._get')
+    def test_organisms_df(self, mock_get):
+        mock_get.return_value = [{'ncbi_tax_id': 9606, 'common_name': 'human'}]
+        from omnipath_client.utils import organisms_df
+
+        result = organisms_df()
+        assert hasattr(result, 'columns') or hasattr(result, 'schema')

@@ -20,7 +20,9 @@ from omnipath_client.utils._mapping import (
     map_names,
     translate,
     all_mappings,
+    translation_df,
     translate_column,
+    translation_dict,
     translate_columns,
 )
 from omnipath_client.utils._reflists import (
@@ -29,6 +31,7 @@ from omnipath_client.utils._reflists import (
     all_swissprots,
 )
 from omnipath_client.utils._taxonomy import (
+    organisms_df,
     all_organisms,
     resolve_organism,
     ensure_latin_name,
@@ -37,5 +40,7 @@ from omnipath_client.utils._taxonomy import (
 )
 from omnipath_client.utils._orthology import (
     translate as orthology_translate,
+    orthology_df,
+    orthology_dict,
     translate_column as orthology_translate_column,
 )

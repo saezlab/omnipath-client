@@ -281,3 +281,103 @@ def all_mappings(
             'ncbi_tax_id': ncbi_tax_id,
         },
     ).get('results', {})
+
+
+def translation_dict(
+    identifiers: str | list[str],
+    id_type: str,
+    target_id_type: str,
+    ncbi_tax_id: int = 9606,
+    raw: bool = False,
+    backend: str | None = None,
+) -> dict[str, set[str]]:
+    """Get translation data as a dict.
+
+    Args:
+        identifiers: Source IDs to translate. String or list.
+        id_type: Source ID type.
+        target_id_type: Target ID type.
+        ncbi_tax_id: Organism (default: 9606).
+        raw: Skip special-case handling.
+        backend: Force specific backend.
+
+    Returns:
+        Dict mapping source IDs to sets of target IDs.
+
+    Example::
+
+        table = translation_dict(['TP53', 'EGFR'], 'genesymbol', 'uniprot')
+        table['TP53']  # {'P04637'}
+    """
+
+    if isinstance(identifiers, str):
+        identifiers = [identifiers]
+
+    return translate(
+        identifiers,
+        id_type,
+        target_id_type,
+        ncbi_tax_id,
+        raw=raw,
+        backend=backend,
+    )
+
+
+def translation_df(
+    identifiers: str | list[str],
+    id_type: str,
+    target_id_type: str,
+    ncbi_tax_id: int = 9606,
+    raw: bool = False,
+    backend: str | None = None,
+) -> Any:
+    """Get translation data as a DataFrame.
+
+    Returns a two-column DataFrame with source and target IDs.
+    Prefers polars; falls back to pandas.
+
+    Example::
+
+        df = translation_df(['TP53', 'EGFR'], 'genesymbol', 'uniprot')
+        #   genesymbol   uniprot
+        # 0       TP53   P04637
+        # 1       EGFR   P00533
+    """
+
+    if isinstance(identifiers, str):
+        identifiers = [identifiers]
+
+    trans = translate(
+        identifiers,
+        id_type,
+        target_id_type,
+        ncbi_tax_id,
+        raw=raw,
+        backend=backend,
+    )
+
+    src_vals: list[str] = []
+    tgt_vals: list[str] = []
+
+    for src, targets in trans.items():
+        for tgt in sorted(targets):
+            src_vals.append(src)
+            tgt_vals.append(tgt)
+
+    try:
+        import polars as pl
+
+        return pl.DataFrame({id_type: src_vals, target_id_type: tgt_vals})
+    except ImportError:
+        pass
+
+    try:
+        import pandas as pd
+
+        return pd.DataFrame({id_type: src_vals, target_id_type: tgt_vals})
+    except ImportError:
+        pass
+
+    _log.warning('No DataFrame library available, returning dict')
+
+    return trans

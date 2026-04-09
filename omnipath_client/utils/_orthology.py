@@ -125,3 +125,91 @@ def translate_column(
             result = result.filter(nw.col(new_col).is_not_null())
 
     return nw.to_native(result)
+
+
+def orthology_dict(
+    identifiers: str | list[str],
+    source: int = 9606,
+    target: int = 10090,
+    id_type: str = 'genesymbol',
+    resource: str | None = None,
+    min_sources: int = 1,
+    raw: bool = False,
+) -> dict[str, set[str]]:
+    """Get orthology data as a dict.
+
+    Example::
+
+        table = orthology_dict(['TP53', 'EGFR'], source=9606, target=10090)
+        table['TP53']  # {'Trp53'}
+    """
+
+    if isinstance(identifiers, str):
+        identifiers = [identifiers]
+
+    return translate(
+        identifiers,
+        source=source,
+        target=target,
+        id_type=id_type,
+        resource=resource,
+        min_sources=min_sources,
+        raw=raw,
+    )
+
+
+def orthology_df(
+    identifiers: str | list[str],
+    source: int = 9606,
+    target: int = 10090,
+    id_type: str = 'genesymbol',
+    resource: str | None = None,
+    min_sources: int = 1,
+    raw: bool = False,
+) -> Any:
+    """Get orthology data as a DataFrame.
+
+    Example::
+
+        df = orthology_df(['TP53', 'EGFR'], source=9606, target=10090)
+    """
+
+    if isinstance(identifiers, str):
+        identifiers = [identifiers]
+
+    trans = translate(
+        identifiers,
+        source=source,
+        target=target,
+        id_type=id_type,
+        resource=resource,
+        min_sources=min_sources,
+        raw=raw,
+    )
+
+    src_vals: list[str] = []
+    tgt_vals: list[str] = []
+
+    for src, targets in trans.items():
+        for tgt in sorted(targets):
+            src_vals.append(src)
+            tgt_vals.append(tgt)
+
+    src_col = f'{id_type}_{source}'
+    tgt_col = f'{id_type}_{target}'
+
+    try:
+        import polars as pl
+
+        return pl.DataFrame({src_col: src_vals, tgt_col: tgt_vals})
+    except ImportError:
+        pass
+
+    try:
+        import pandas as pd
+
+        return pd.DataFrame({src_col: src_vals, tgt_col: tgt_vals})
+    except ImportError:
+        pass
+
+    return trans

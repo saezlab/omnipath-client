@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from omnipath_client.utils._base import _get
 
 
@@ -39,3 +41,39 @@ def all_organisms() -> list[dict]:
     """List all known organisms."""
 
     return _get('/taxonomy/organisms')
+
+
+def organisms_df(has_data: bool = False) -> Any:
+    """Get all organisms as a DataFrame.
+
+    Args:
+        has_data: Only organisms with mapping data in the database.
+
+    Example::
+
+        df = organisms_df()
+        df = organisms_df(has_data=True)
+    """
+
+    params: dict[str, Any] = {}
+
+    if has_data:
+        params['has_data'] = True
+
+    data = _get('/taxonomy/organisms', params) if params else _get('/taxonomy/organisms')
+
+    try:
+        import polars as pl
+
+        return pl.DataFrame(data)
+    except ImportError:
+        pass
+
+    try:
+        import pandas as pd
+
+        return pd.DataFrame(data)
+    except ImportError:
+        pass
+
+    return data
