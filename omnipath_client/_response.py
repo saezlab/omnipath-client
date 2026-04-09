@@ -77,6 +77,25 @@ def _read_parquet(
     # Build the order: requested backend first, then the rest
     order = [backend] + [b for b in _BACKEND_ORDER if b != backend]
 
+    # Check if the source file is actually Parquet
+    # (HTTP errors return HTML/text that can't be parsed)
+    if isinstance(source, (str, Path)):
+        try:
+            with open(source, 'rb') as _f:
+                header = _f.read(4)
+                if header != b'PAR1':
+                    # Read the content for the error message
+                    _f.seek(0)
+                    text_content = _f.read(500).decode('utf-8', errors='replace')
+                    from omnipath_client._errors import OmniPathAPIError
+                    raise OmniPathAPIError(
+                        f'Server returned non-Parquet response '
+                        f'(likely an error page or the API is down). '
+                        f'Content: {text_content[:200]}'
+                    )
+        except (OSError, PermissionError):
+            pass
+
     for name in order:
         reader = _PARQUET_READERS.get(name)
 
