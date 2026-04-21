@@ -31,7 +31,7 @@ __all__ = [
     'values',
 ]
 
-from omnipath_client import utils
+from omnipath_client import cosmos, utils
 from ._client import (
     OmniPath,
     params,
