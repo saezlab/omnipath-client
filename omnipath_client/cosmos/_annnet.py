@@ -41,7 +41,7 @@ def to_annnet(df: Any) -> Any:
     """
 
     try:
-        from annnet import Graph
+        from annnet.core.graph import AnnNet
     except ImportError as exc:
         raise ImportError(
             'annnet is required for graph conversion. '
@@ -74,7 +74,7 @@ def to_annnet(df: Any) -> Any:
             entity_types[tgt] = tgt_type
 
     # -- Build graph ----------------------------------------------------------
-    g = Graph()
+    g = AnnNet()
 
     # Bulk add vertices
     vertices = [
