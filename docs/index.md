@@ -72,6 +72,8 @@ op.values('exports/interactions', 'entity_types')    # allowed values
   taxonomy, orthology, reference lists
 - **[OmniPath Database vignette](vignettes/database.md)** -- interactions,
   annotations, complexes
+- **[COSMOS PKN vignette](vignettes/cosmos.md)** -- multi-layer
+  prior-knowledge network for multi-omics causal reasoning
 - **[API Reference](reference/index.md)** -- full function documentation
 - **[Installation](installation.md)** -- setup instructions
 
@@ -81,3 +83,4 @@ op.values('exports/interactions', 'entity_types')    # allowed values
 |---------|-----|-----------------|
 | OmniPath Database | [dev.omnipathdb.org](https://dev.omnipathdb.org) | Interactions, annotations, complexes, ontology |
 | OmniPath Utils | [utils.omnipathdb.org](https://utils.omnipathdb.org) | ID translation, taxonomy, orthology, reference lists |
+| OmniPath Metabo | [metabo.omnipathdb.org](https://metabo.omnipathdb.org) | COSMOS PKN, metabolite-protein interactions |

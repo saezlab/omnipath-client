@@ -39,6 +39,7 @@ nav:
     -   Overview: vignettes/index.md
     -   OmniPath Utils: vignettes/utils.md
     -   OmniPath Database: vignettes/database.md
+    -   COSMOS PKN: vignettes/cosmos.md
 -   API Reference: reference/index.md
 -   About: about.md
 
