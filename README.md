@@ -12,8 +12,15 @@ prior-knowledge web API.
 
 ## Features
 
-- Export **entities**, **interactions**, and **associations** (complexes,
-  pathways, reactions) as DataFrames
+- One-call **`lookup()`** and **`related()`** helpers that resolve
+  free-text queries, fetch the matching entities/relations, and pivot
+  identifiers into named columns — no manual primary-key juggling
+- Friendly id-type aliases (`name`, `chebi`, `hmdb`, `uniprot`,
+  `genesymbol`, `kegg`, …) and participant-type aliases
+  (`protein`, `small_molecule`, …) that hide the MI/OM ontology codes
+- Lower-level primitives: export **entities**, **relations**, and
+  **annotations** as DataFrames; resolve free-text identifiers; slice
+  with paging
 - **Ontology** term lookup, search, and hierarchy trees
 - Multi-backend output: [polars](https://pola.rs/) (default),
   [pandas](https://pandas.pydata.org/), or
@@ -21,7 +28,8 @@ prior-knowledge web API.
 - Optional graph conversion to [annnet](https://github.com/saezlab/annnet)
   objects
 - Query validation against the API schema
-- Caching via [download-manager](https://github.com/saezlab/download-manager)
+- Caching via [download-manager](https://github.com/saezlab/download-manager),
+  with a `fresh()` context manager for first-touch refresh
 
 ## Installation
 
@@ -37,26 +45,74 @@ pip install omnipath-client polars
 
 ## Quick start
 
+The two high-level helpers, `lookup()` and `related()`, cover most use
+cases in a single call:
+
 ```python
 import omnipath_client as op
 
-# All interactions as a polars DataFrame
-df = op.interactions()
+# Resolve names and pivot identifiers into named columns
+op.lookup(
+    ['caffeine', 'metformin', 'TP53'],
+    id_types=['name', 'chebi', 'hmdb', 'uniprot', 'genesymbol'],
+)
 
-# Directed interactions only
-df = op.interactions(direction='directed')
+# Compounds reported in strawberry (FooDB), as a wide joined table
+op.related(
+    subject='Strawberry',
+    sources=['foodb'],
+    id_types=['name', 'chebi', 'hmdb'],
+)
+
+# Drug targets for caffeine (positional arg matches either side)
+op.related(
+    'caffeine',
+    sources=['bindingdb'],
+    id_types=['name', 'uniprot', 'genesymbol'],
+)
+
+# Pathway members from WikiPathways and Reactome at once
+op.related(
+    object=['WP253', 'R-HSA-70171'],
+    sources=['wikipathways', 'reactome'],
+    relation_categories=['annotation'],
+    id_types=['name', 'uniprot', 'chebi'],
+    group_by='object_name',
+)
+```
+
+The lower-level primitives are still available for paged scans, raw
+parquet, or graph export:
+
+```python
+# All relations as a polars DataFrame
+df = op.relations()
+
+# Resolve free-text identifiers to entity primary keys
+op.resolve(['caffeine', 'TP53'])
 
 # Human entities
 df = op.entities(taxonomy_ids=['9606'])
 
-# Interactions as an annnet graph
-g = op.interactions(as_graph=True)
+# Relations as an annnet graph
+g = op.relations(as_graph=True)
 
 # Ontology term lookup
 result = op.ontology_terms(['GO:0006915', 'MI:0326'])
 
 # Choose a different backend
 df = op.entities(backend='pandas')
+```
+
+Cache control:
+
+```python
+# Force a one-shot refresh for everything touched in the block
+with op.fresh():
+    df = op.related('caffeine', sources=['bindingdb'])
+
+# Wipe the entire on-disk cache (e.g. after a server redeploy)
+op.cache_clear()
 ```
 
 For more examples, see the [quickstart guide](https://saezlab.github.io/omnipath-client/quickstart/).

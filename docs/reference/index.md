@@ -9,17 +9,49 @@
 
 ## Module-level functions
 
+### High-level helpers
+
+::: omnipath_client.lookup
+    options:
+        show_source: false
+
+::: omnipath_client.related
+    options:
+        show_source: false
+
+### Export endpoints
+
 ::: omnipath_client.entities
     options:
         show_source: false
 
-::: omnipath_client.interactions
+::: omnipath_client.relations
     options:
         show_source: false
 
-::: omnipath_client.associations
+::: omnipath_client.annotations
     options:
         show_source: false
+
+### Lookup and slice
+
+::: omnipath_client.resolve
+    options:
+        show_source: false
+
+::: omnipath_client.entities_slice
+    options:
+        show_source: false
+
+::: omnipath_client.relations_slice
+    options:
+        show_source: false
+
+::: omnipath_client.resources
+    options:
+        show_source: false
+
+### Ontology
 
 ::: omnipath_client.ontology_terms
     options:
@@ -37,6 +69,16 @@
     options:
         show_source: false
 
+### Cache control
+
+::: omnipath_client.cache_clear
+    options:
+        show_source: false
+
+::: omnipath_client.fresh
+    options:
+        show_source: false
+
 ## Response parsing
 
 ::: omnipath_client._response.parse_response
@@ -45,11 +87,25 @@
 
 ## Graph conversion
 
-::: omnipath_client._graph.interactions_to_graph
+::: omnipath_client._graph.relations_to_graph
     options:
         show_source: false
 
-::: omnipath_client._graph.associations_to_graph
+## Pivots and aliases
+
+::: omnipath_client._pivot.ID_ALIASES
+    options:
+        show_source: false
+
+::: omnipath_client._pivot.PARTICIPANT_TYPE_ALIASES
+    options:
+        show_source: false
+
+::: omnipath_client._pivot.pivot_identifiers
+    options:
+        show_source: false
+
+::: omnipath_client._pivot.join_relations_with_entities
     options:
         show_source: false
 

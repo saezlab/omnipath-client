@@ -53,7 +53,24 @@ orthology_translate(['TP53', 'EGFR'], source=9606, target=10090)
 ```python
 import omnipath_client as op
 
-df = op.interactions(entity_ids=['Q9Y6K9'])
+# One-call helper: caffeine drug targets with UniProt + gene symbols
+op.related(
+    'caffeine',
+    sources=['bindingdb'],
+    id_types=['name', 'uniprot', 'genesymbol'],
+)
+
+# Or the lower-level primitive
+df = op.relations(entity_pks=['2119890'])
+```
+
+### Resolve and enrich identifiers
+
+```python
+op.lookup(
+    ['caffeine', 'metformin', 'TP53'],
+    id_types=['name', 'chebi', 'hmdb', 'uniprot', 'genesymbol'],
+)
 ```
 
 ### Explore the API
@@ -61,9 +78,10 @@ df = op.interactions(entity_ids=['Q9Y6K9'])
 ```python
 import omnipath_client as op
 
-op.endpoints()                                      # all endpoints
-op.params('exports/interactions')                    # available filters
-op.values('exports/interactions', 'entity_types')    # allowed values
+op.endpoints()                                       # all endpoints
+op.params('exports/relations/parquet')                # available filters
+op.values('exports/entities/parquet', 'entity_types') # allowed values
+op.resources()                                        # source catalog
 ```
 
 ## Learn more
