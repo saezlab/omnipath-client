@@ -8,7 +8,6 @@ from omnipath_client._query import QueryBuilder
 from omnipath_client._errors import (
     UnknownEndpointError,
     UnknownParameterError,
-    InvalidParameterValueError,
 )
 from omnipath_client._inventory import Inventory
 
@@ -39,16 +38,19 @@ class TestQueryBuilder:
         assert query.endpoint.path == '/exports/entities/parquet'
         assert query.params == {'taxonomy_ids': ['9606']}
 
-    def test_valid_interaction_query(self, query_builder):
+    def test_valid_relation_query(self, query_builder):
 
         query = query_builder.build(
-            'exports/interactions/parquet',
-            entity_ids=['Q9Y6K9'],
-            direction='directed',
+            'exports/relations/parquet',
+            entity_pks=['12345'],
+            sources=['signor'],
+            predicates=['interacts_with'],
         )
 
-        assert query.params['entity_ids'] == ['Q9Y6K9']
-        assert query.params['direction'] == 'directed'
+        assert query.endpoint.path == '/exports/relations/parquet'
+        assert query.params['entity_pks'] == ['12345']
+        assert query.params['sources'] == ['signor']
+        assert query.params['predicates'] == ['interacts_with']
 
     def test_unknown_endpoint(self, query_builder):
 
@@ -62,23 +64,6 @@ class TestQueryBuilder:
                 'exports/entities/parquet',
                 bogus_param='value',
             )
-
-    def test_invalid_enum_value(self, query_builder):
-
-        with pytest.raises(InvalidParameterValueError):
-            query_builder.build(
-                'exports/interactions/parquet',
-                direction='sideways',
-            )
-
-    def test_valid_enum_value(self, query_builder):
-
-        query = query_builder.build(
-            'exports/interactions/parquet',
-            sign='positive',
-        )
-
-        assert query.params['sign'] == 'positive'
 
     def test_none_values_skipped(self, query_builder):
 

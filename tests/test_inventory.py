@@ -27,8 +27,8 @@ class TestStaticFallback:
 
         assert len(endpoints) > 0
         assert 'exports/entities/parquet' in endpoints
-        assert 'exports/interactions/parquet' in endpoints
-        assert 'exports/associations/parquet' in endpoints
+        assert 'exports/relations/parquet' in endpoints
+        assert 'exports/annotations/parquet' in endpoints
 
     def test_entity_filters(self):
 
@@ -41,18 +41,15 @@ class TestStaticFallback:
         assert 'taxonomy_ids' in ep.params
         assert 'entity_types' in ep.params
 
-    def test_interaction_filters(self):
+    def test_relation_filters(self):
 
         endpoints = _build_static_fallback()
-        ep = endpoints['exports/interactions/parquet']
+        ep = endpoints['exports/relations/parquet']
 
-        assert 'direction' in ep.params
-        pdef = ep.params['direction']
-        assert pdef.allowed_values == [
-            'any',
-            'directed',
-            'undirected',
-        ]
+        assert 'subject_entity_pks' in ep.params
+        assert 'object_entity_pks' in ep.params
+        assert 'predicates' in ep.params
+        assert 'relation_categories' in ep.params
 
 
 class TestParseOpenapi:
@@ -72,8 +69,8 @@ class TestParseOpenapi:
 
         assert len(endpoints) > 0
         assert 'exports/entities/parquet' in endpoints
-        assert 'exports/interactions/parquet' in endpoints
-        assert 'exports/associations/parquet' in endpoints
+        assert 'exports/relations/parquet' in endpoints
+        assert 'exports/annotations/parquet' in endpoints
 
     def test_export_endpoints_have_filters(self):
 
@@ -84,19 +81,12 @@ class TestParseOpenapi:
             spec = json.load(f)
 
         endpoints = parse_openapi(spec)
-        ep = endpoints['exports/interactions/parquet']
+        ep = endpoints['exports/relations/parquet']
 
         assert ep.method == 'POST'
         assert ep.response_format == 'parquet'
-        assert 'entity_ids' in ep.params
-        assert 'direction' in ep.params
-
-        direction = ep.params['direction']
-        assert direction.allowed_values == [
-            'any',
-            'directed',
-            'undirected',
-        ]
+        assert 'sources' in ep.params
+        assert 'predicates' in ep.params
 
     def test_ontology_endpoints(self):
 
@@ -131,22 +121,23 @@ class TestInventory:
         inv = Inventory(base_url='http://localhost:99999')
         inv.load()
 
-        params = inv.params('exports/interactions/parquet')
+        params = inv.params('exports/relations/parquet')
 
-        assert 'entity_ids' in params
-        assert isinstance(params['entity_ids'], ParamDef)
+        assert 'sources' in params
+        assert isinstance(params['sources'], ParamDef)
 
-    def test_allowed_values_method(self):
+    def test_allowed_values_unconstrained_relation_filter(self):
 
         inv = Inventory(base_url='http://localhost:99999')
         inv.load()
 
         values = inv.allowed_values(
-            'exports/interactions/parquet',
-            'direction',
+            'exports/relations/parquet',
+            'sources',
         )
 
-        assert values == ['any', 'directed', 'undirected']
+        # The static fallback does not enumerate allowed sources.
+        assert values is None
 
     def test_allowed_values_unconstrained(self):
 
