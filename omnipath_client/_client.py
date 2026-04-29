@@ -108,13 +108,13 @@ class OmniPath:
             **filters,
         )
 
-    def interactions(
+    def relations(
         self,
         as_graph: bool = False,
         backend: BackendType | None = None,
         **filters: Any,
     ) -> Any:
-        """Export interactions.
+        """Export relations (interactions, memberships, etc.).
 
         Args:
             as_graph:
@@ -123,60 +123,142 @@ class OmniPath:
             backend:
                 Override the default DataFrame backend.
             **filters:
-                Filter parameters (entity_ids, interaction_types,
-                direction, sign, etc.).
+                Filter parameters (sources, predicates,
+                interaction_types, relation_categories,
+                subject_entity_pks, object_entity_pks, etc.).
 
         Returns:
-            A DataFrame of interactions, or an ``annnet.Graph``.
+            A DataFrame of relations, or an ``annnet.Graph``.
         """
 
         df = self._fetch(
-            'exports/interactions/parquet',
+            'exports/relations/parquet',
             backend=backend,
             **filters,
         )
 
         if as_graph:
-            from omnipath_client._graph import interactions_to_graph
+            from omnipath_client._graph import relations_to_graph
 
-            return interactions_to_graph(df)
+            return relations_to_graph(df)
 
         return df
 
-    def associations(
+    def annotations(
         self,
-        as_graph: bool = False,
         backend: BackendType | None = None,
         **filters: Any,
     ) -> Any:
-        """Export associations (complexes, pathways, reactions).
+        """Export ontology annotations attached to entities.
 
         Args:
-            as_graph:
-                If True, return an ``annnet.Graph`` instead of a
-                DataFrame.
             backend:
                 Override the default DataFrame backend.
             **filters:
-                Filter parameters (parent_entity_ids,
-                member_entity_ids, etc.).
+                Filter parameters (prefixes, ontology_prefixes,
+                entity_pks).
 
         Returns:
-            A DataFrame of associations, or an ``annnet.Graph``.
+            A DataFrame of annotations.
         """
 
-        df = self._fetch(
-            'exports/associations/parquet',
+        return self._fetch(
+            'exports/annotations/parquet',
             backend=backend,
             **filters,
         )
 
-        if as_graph:
-            from omnipath_client._graph import associations_to_graph
+    # --- Slice / lookup endpoints ---
 
-            return associations_to_graph(df)
+    def resolve(self, identifiers: list[str]) -> Any:
+        """Resolve free-text identifiers to entity primary keys.
 
-        return df
+        Args:
+            identifiers:
+                List of identifier strings (UniProt accessions,
+                ChEBI IDs, gene symbols, free-text names, etc.).
+
+        Returns:
+            A dict with ``matches`` (per-input entity_pk lists) and
+            ``entities`` (full entity records).
+        """
+
+        return self._fetch('entities/resolve', identifiers=identifiers)
+
+    def entities_slice(
+        self,
+        filters: dict[str, Any] | None = None,
+        query: str = '',
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Any:
+        """Page through entities with filters and free-text search.
+
+        Args:
+            filters:
+                ``EntityFilters`` payload (entity_pks, entity_types,
+                sources, taxonomy_ids, ncbi_tax_id).
+            query:
+                Free-text search across canonical identifiers and
+                aliases.
+            limit:
+                Maximum number of rows.
+            offset:
+                Row offset.
+
+        Returns:
+            A dict with ``rows``, ``total``, ``limit``, ``offset``.
+        """
+
+        return self._fetch(
+            'entities/slice',
+            filters=filters or {},
+            query=query,
+            limit=limit,
+            offset=offset,
+        )
+
+    def relations_slice(
+        self,
+        filters: dict[str, Any] | None = None,
+        query: str = '',
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Any:
+        """Page through relations with filters and free-text search.
+
+        Args:
+            filters:
+                ``RelationFilters`` payload (sources, predicates,
+                relation_categories, subject_entity_pks, etc.).
+            query:
+                Free-text search.
+            limit:
+                Maximum number of rows.
+            offset:
+                Row offset.
+
+        Returns:
+            A dict with ``rows``, ``total``, ``limit``, ``offset``.
+        """
+
+        return self._fetch(
+            'relations/slice',
+            filters=filters or {},
+            query=query,
+            limit=limit,
+            offset=offset,
+        )
+
+    def resources(self) -> Any:
+        """List the resource catalog with build statistics.
+
+        Returns:
+            List of resource records (resource_id, resource_name,
+            categories, entity_count, interaction_count, etc.).
+        """
+
+        return self._fetch('resources')
 
     # --- Ontology endpoints ---
 
@@ -240,36 +322,20 @@ class OmniPath:
 
     # --- Evidence endpoints ---
 
-    def interaction_evidence(self, interaction_id: int) -> Any:
-        """Get full evidence for a single interaction.
+    def relation_evidence(self, relation_pk: int) -> Any:
+        """Get full evidence for a single relation.
 
         Args:
-            interaction_id:
-                The interaction ID.
+            relation_pk:
+                The relation primary key.
 
         Returns:
             Evidence data as a dict.
         """
 
         return self._fetch(
-            'interactions/{interaction_id}/evidence',
-            interaction_id=interaction_id,
-        )
-
-    def association_evidence(self, association_id: int) -> Any:
-        """Get full evidence for a single association.
-
-        Args:
-            association_id:
-                The association ID.
-
-        Returns:
-            Evidence data as a dict.
-        """
-
-        return self._fetch(
-            'associations/{association_id}/evidence',
-            association_id=association_id,
+            'relations/{relation_pk}/evidence',
+            relation_pk=relation_pk,
         )
 
     # --- Introspection ---
@@ -321,28 +387,81 @@ def entities(**filters: Any) -> Any:
     return _get_default().entities(**filters)
 
 
-def interactions(
+def relations(
     as_graph: bool = False,
     **filters: Any,
 ) -> Any:
-    """Export interactions using the default client.
+    """Export relations using the default client.
 
-    See ``OmniPath.interactions`` for details.
+    See ``OmniPath.relations`` for details.
     """
 
-    return _get_default().interactions(as_graph=as_graph, **filters)
+    return _get_default().relations(as_graph=as_graph, **filters)
 
 
-def associations(
-    as_graph: bool = False,
-    **filters: Any,
+def annotations(**filters: Any) -> Any:
+    """Export ontology annotations using the default client.
+
+    See ``OmniPath.annotations`` for details.
+    """
+
+    return _get_default().annotations(**filters)
+
+
+def resolve(identifiers: list[str]) -> Any:
+    """Resolve identifiers using the default client.
+
+    See ``OmniPath.resolve`` for details.
+    """
+
+    return _get_default().resolve(identifiers)
+
+
+def entities_slice(
+    filters: dict[str, Any] | None = None,
+    query: str = '',
+    limit: int = 50,
+    offset: int = 0,
 ) -> Any:
-    """Export associations using the default client.
+    """Slice entities using the default client.
 
-    See ``OmniPath.associations`` for details.
+    See ``OmniPath.entities_slice`` for details.
     """
 
-    return _get_default().associations(as_graph=as_graph, **filters)
+    return _get_default().entities_slice(
+        filters=filters,
+        query=query,
+        limit=limit,
+        offset=offset,
+    )
+
+
+def relations_slice(
+    filters: dict[str, Any] | None = None,
+    query: str = '',
+    limit: int = 50,
+    offset: int = 0,
+) -> Any:
+    """Slice relations using the default client.
+
+    See ``OmniPath.relations_slice`` for details.
+    """
+
+    return _get_default().relations_slice(
+        filters=filters,
+        query=query,
+        limit=limit,
+        offset=offset,
+    )
+
+
+def resources() -> Any:
+    """List resources catalog using the default client.
+
+    See ``OmniPath.resources`` for details.
+    """
+
+    return _get_default().resources()
 
 
 def ontology_terms(term_ids: list[str]) -> Any:
@@ -401,7 +520,7 @@ def params(endpoint: str) -> dict[str, ParamDef]:
     """Get parameters for an endpoint.
 
     Args:
-        endpoint: Endpoint path (e.g. 'exports/interactions').
+        endpoint: Endpoint path (e.g. 'exports/relations/parquet').
 
     Returns:
         Dict mapping parameter names to ParamDef objects with
@@ -410,7 +529,7 @@ def params(endpoint: str) -> dict[str, ParamDef]:
     Example::
 
         import omnipath_client as op
-        for name, p in op.params('exports/interactions').items():
+        for name, p in op.params('exports/relations/parquet').items():
             vals = p.allowed_values or []
             print(f'{name}: {p.param_type}, required={p.required}, values={vals[:5]}')
     """
@@ -431,8 +550,8 @@ def values(endpoint: str, param: str) -> list[str] | None:
     Example::
 
         import omnipath_client as op
-        op.values('exports/interactions', 'entity_types')
-        # ['protein', 'complex', 'mirna', ...]
+        op.values('exports/entities/parquet', 'entity_types')
+        # ['MI:0326:Protein', 'MI:0328:Small Molecule', ...]
     """
 
     return _get_default().values(endpoint, param)

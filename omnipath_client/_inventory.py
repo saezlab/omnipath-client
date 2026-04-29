@@ -160,8 +160,19 @@ def parse_openapi(spec: dict[str, Any]) -> dict[str, EndpointDef]:
         len(schemas),
     )
 
+    # When the same path is exposed under multiple verbs, prefer
+    # the POST variant — its JSON body carries the structured
+    # filter parameters, while the GET variant degrades them to
+    # opaque query strings.
+    _method_priority = {'POST': 3, 'PUT': 2, 'GET': 1, 'DELETE': 0}
+
     for path, methods in paths.items():
-        for method, details in methods.items():
+        ordered = sorted(
+            methods.items(),
+            key=lambda kv: _method_priority.get(kv[0].upper(), -1),
+        )
+
+        for method, details in ordered:
             key = path.lstrip('/')
             params: dict[str, ParamDef] = {}
 

@@ -1,4 +1,4 @@
-"""Conversion of interaction and association DataFrames to annnet Graphs."""
+"""Conversion of relations DataFrames to annnet Graphs."""
 
 from __future__ import annotations
 
@@ -10,15 +10,17 @@ from omnipath_client._session import get_logger
 logger = get_logger(__name__)
 
 
-def interactions_to_graph(df: Any) -> Any:
-    """Convert an interactions DataFrame to an annnet Graph.
+def relations_to_graph(df: Any) -> Any:
+    """Convert a relations DataFrame to an annnet Graph.
 
-    Maps interaction columns to annnet edge format:
-    ``member_a_id`` -> source, ``member_b_id`` -> target.
+    Maps relation columns to annnet edge format:
+    ``subject_entity_pk`` -> source, ``object_entity_pk`` -> target.
+    Vertex IDs are entity primary keys; resolve them via
+    ``OmniPath.entities_slice`` if you need human-readable labels.
 
     Args:
         df:
-            An interactions DataFrame (any backend).
+            A relations DataFrame (any backend).
 
     Returns:
         An ``annnet.Graph`` instance.
@@ -34,7 +36,7 @@ def interactions_to_graph(df: Any) -> Any:
 
     import polars as pl
 
-    logger.info('Converting interactions DataFrame to annnet graph')
+    logger.info('Converting relations DataFrame to annnet graph')
 
     # Convert to polars if needed (annnet is polars-backed)
     if not isinstance(df, pl.DataFrame):
@@ -42,83 +44,24 @@ def interactions_to_graph(df: Any) -> Any:
 
         nw_df = nw.from_native(df, eager_only=True)
         df = nw_df.to_native()
-        logger.debug('Converted interactions frame to polars backend')
+        logger.debug('Converted relations frame to polars backend')
 
     g = annnet.Graph(directed=True)
 
-    # Add vertices from both member columns
-    all_ids = pl.concat(
+    all_pks = pl.concat(
         [
-            df.select(pl.col('member_a_id').alias('id')),
-            df.select(pl.col('member_b_id').alias('id')),
+            df.select(pl.col('subject_entity_pk').alias('pk')),
+            df.select(pl.col('object_entity_pk').alias('pk')),
         ]
     ).unique()
 
-    g.add_vertices(all_ids['id'].to_list())
+    g.add_vertices(all_pks['pk'].to_list())
 
-    # Add edges
     for row in df.iter_rows(named=True):
         g.add_edge(
-            row['member_a_id'],
-            row['member_b_id'],
-            directed=row.get('is_directed', True),
+            row['subject_entity_pk'],
+            row['object_entity_pk'],
         )
 
-    logger.info('Created interaction graph with %d edges', df.height)
-    return g
-
-
-def associations_to_graph(df: Any) -> Any:
-    """Convert an associations DataFrame to an annnet Graph.
-
-    Associations represent parent-member relationships (complexes,
-    pathways, reactions).
-
-    Args:
-        df:
-            An associations DataFrame (any backend).
-
-    Returns:
-        An ``annnet.Graph`` instance.
-    """
-
-    try:
-        import annnet
-    except ImportError as e:
-        raise ImportError(
-            'annnet is required for graph conversion. '
-            'Install it with: pip install annnet',
-        ) from e
-
-    import polars as pl
-
-    logger.info('Converting associations DataFrame to annnet graph')
-
-    if not isinstance(df, pl.DataFrame):
-        import narwhals as nw
-
-        nw_df = nw.from_native(df, eager_only=True)
-        df = nw_df.to_native()
-        logger.debug('Converted associations frame to polars backend')
-
-    g = annnet.Graph(directed=True)
-
-    # Collect all unique entity IDs
-    all_ids = pl.concat(
-        [
-            df.select(pl.col('parent_entity_id').alias('id')),
-            df.select(pl.col('member_entity_id').alias('id')),
-        ]
-    ).unique()
-
-    g.add_vertices(all_ids['id'].to_list())
-
-    # Add edges from parent to member
-    for row in df.iter_rows(named=True):
-        g.add_edge(
-            row['parent_entity_id'],
-            row['member_entity_id'],
-        )
-
-    logger.info('Created association graph with %d edges', df.height)
+    logger.info('Created relations graph with %d edges', df.height)
     return g
