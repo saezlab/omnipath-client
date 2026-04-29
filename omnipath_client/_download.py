@@ -42,11 +42,49 @@ class Downloader:
 
         self._dm = DownloadManager(**dm_kwargs)
         self._use_cache = use_cache
+        # Fingerprints (url + payload hash) of requests already
+        # refreshed in the current ``fresh()`` scope; ``None`` when
+        # the scope is inactive.
+        self._fresh_seen: set[str] | None = None
         logger.info(
             'Initialized downloader with cache=%s cache_dir=%s',
             use_cache,
             cache_dir,
         )
+
+    def enter_fresh(self) -> None:
+        """Begin a fresh-cache scope (used by ``OmniPath.fresh()``)."""
+
+        self._fresh_seen = set()
+        logger.info('Entered fresh-cache scope')
+
+    def exit_fresh(self) -> None:
+        """End a fresh-cache scope."""
+
+        self._fresh_seen = None
+        logger.info('Exited fresh-cache scope')
+
+    def clear_cache(self) -> int:
+        """Remove every cached response. Returns the number of entries
+        removed."""
+
+        try:
+            items = list(self._dm.cache.contents())
+            for item in items:
+                self._dm.cache.remove(item)
+            self._dm.cache.clean_disk()
+            self._dm.cache.clean_db()
+            logger.info('Cleared %d cache entries', len(items))
+            return len(items)
+
+        except Exception as e:
+            logger.exception('Cache clear failed: %s', e)
+            raise
+
+    @staticmethod
+    def _fingerprint(url: str, payload: dict[str, Any] | None) -> str:
+        body = json.dumps(payload or {}, sort_keys=True, default=str)
+        return f'{url}::{body}'
 
     def _download_url(
         self,
@@ -76,10 +114,18 @@ class Downloader:
                 dl_kwargs['query'] = payload
 
             dest = None if self._use_cache else False
+            force = force_download
+
+            if self._fresh_seen is not None:
+                fp = self._fingerprint(url, payload)
+                if fp not in self._fresh_seen:
+                    force = True
+                    self._fresh_seen.add(fp)
+
             result = self._dm.download(
                 url,
                 dest=dest,
-                force_download=force_download,
+                force_download=force,
                 **dl_kwargs,
             )
 

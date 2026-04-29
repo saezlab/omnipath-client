@@ -33,13 +33,20 @@ __all__ = [
     'endpoints',
     'params',
     'values',
+    'lookup',
+    'related',
+    'cache_clear',
+    'fresh',
 ]
 
 from omnipath_client import cosmos, utils
 from ._client import (
     OmniPath,
+    fresh,
+    lookup,
     params,
     values,
+    related,
     entities,
     resolve,
     endpoints,
@@ -47,6 +54,7 @@ from ._client import (
     resources,
     annotations,
     ontologies,
+    cache_clear,
     search_terms,
     ontology_tree,
     ontology_terms,

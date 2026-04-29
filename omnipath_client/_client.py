@@ -2,8 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Iterator, Sequence
+from contextlib import contextmanager
 
+from omnipath_client._pivot import (
+    ID_ALIASES,
+    DEFAULT_ID_TYPES,
+    PARTICIPANT_TYPE_ALIASES,
+    expand_aliases,
+    pivot_identifiers,
+    join_relations_with_entities,
+)
 from omnipath_client._query import QueryBuilder
 from omnipath_client._types import BackendType
 from omnipath_client._session import get_logger, get_session
@@ -338,6 +347,254 @@ class OmniPath:
             relation_pk=relation_pk,
         )
 
+    # --- High-level helpers ---
+
+    def lookup(
+        self,
+        query: str | int | Sequence[str | int],
+        id_types: Sequence[str] = DEFAULT_ID_TYPES,
+        *,
+        keep_canonical: bool = False,
+    ) -> Any:
+        """Resolve free-text or PK input and return enriched entity rows.
+
+        Wraps ``resolve()`` + ``entities()`` and pivots the requested
+        ``id_types`` into named columns.
+
+        Args:
+            query:
+                A name, accession, or entity_pk; or a list of any
+                combination thereof. Strings are auto-resolved.
+            id_types:
+                Aliases (or raw codes) to surface as columns. See
+                ``omnipath_client._pivot.ID_ALIASES`` for the full
+                alias map.
+            keep_canonical:
+                Retain ``canonical_identifier`` and the raw
+                ``identifiers`` list-column.
+
+        Returns:
+            A polars DataFrame with one row per matched entity_pk.
+        """
+
+        items = [query] if isinstance(query, (str, int)) else list(query)
+        names = [str(x) for x in items if not _is_int(x)]
+        explicit_pks = [str(x) for x in items if _is_int(x)]
+
+        resolved_pks: list[str] = list(explicit_pks)
+        match_query: dict[int, list[str]] = {}
+
+        if names:
+            res = self.resolve(names)
+            for m in res.get('matches', []):
+                pks = [str(p) for p in m.get('entityPks', [])]
+                resolved_pks.extend(pks)
+                for p in pks:
+                    match_query.setdefault(int(p), []).append(m['identifier'])
+
+        if not resolved_pks:
+            ents = self.entities(entity_pks=['__none__'])
+            return pivot_identifiers(
+                ents,
+                id_types=id_types,
+                keep_canonical=keep_canonical,
+            )
+
+        ents = self.entities(entity_pks=list(dict.fromkeys(resolved_pks)))
+        wide = pivot_identifiers(
+            ents,
+            id_types=id_types,
+            keep_canonical=keep_canonical,
+        )
+
+        if match_query:
+            import polars as pl
+
+            mapping = pl.DataFrame(
+                {
+                    'entity_pk': list(match_query),
+                    'query': [
+                        ', '.join(sorted(set(v)))
+                        for v in match_query.values()
+                    ],
+                },
+            )
+            wide = mapping.join(wide, on='entity_pk', how='right')
+
+        return wide
+
+    def related(
+        self,
+        query: str | int | Sequence[str | int] | None = None,
+        *,
+        subject: str | int | Sequence[str | int] | None = None,
+        object: str | int | Sequence[str | int] | None = None,
+        sources: Sequence[str] | None = None,
+        predicates: Sequence[str] | None = None,
+        relation_categories: Sequence[str] | None = None,
+        participant_types: Sequence[str] | None = None,
+        id_types: Sequence[str] = DEFAULT_ID_TYPES,
+        group_by: str | None = None,
+        limit: int | None = None,
+        keep_canonical: bool = False,
+    ) -> Any:
+        """Pull joined relations around a query in one call.
+
+        Resolves any string inputs, fetches the matching relations,
+        fetches the entity records for every involved PK, and joins
+        them back into a wide DataFrame with ``subject_*`` / ``object_*``
+        columns.
+
+        Args:
+            query:
+                Positional argument matching the entity on **either**
+                side of the relation. Use ``subject=`` / ``object=`` to
+                pin a direction.
+            subject:
+                Restrict to relations where this entity is the subject.
+            object:
+                Restrict to relations where this entity is the object.
+            sources:
+                Resource IDs to include (e.g. ``['foodb', 'hmdb']``).
+            predicates:
+                Predicate filter (e.g. ``['has_member']``).
+            relation_categories:
+                Category filter (``['interaction', 'membership',
+                'annotation']``).
+            participant_types:
+                Friendly aliases (``'protein'``, ``'small_molecule'``,
+                …) or raw MI codes.
+            id_types:
+                Identifier aliases to pivot as ``subject_<id>`` and
+                ``object_<id>`` columns.
+            group_by:
+                Sort the result by this column (e.g.
+                ``'object_canonical_id'``); useful when the same
+                entity appears under several pathway IDs.
+            limit:
+                Truncate the output to this many rows.
+            keep_canonical:
+                Retain canonical_identifier / raw identifiers columns.
+
+        Returns:
+            A wide polars DataFrame.
+        """
+
+        subj_pks = self._resolve_to_pks(subject if subject is not None else query)
+        obj_pks = self._resolve_to_pks(object) if object is not None else None
+
+        rel_filters: dict[str, Any] = {}
+
+        if sources:
+            rel_filters['sources'] = list(sources)
+        if predicates:
+            rel_filters['predicates'] = list(predicates)
+        if relation_categories:
+            rel_filters['relation_categories'] = list(relation_categories)
+        if participant_types:
+            rel_filters['participant_types'] = expand_aliases(
+                participant_types, PARTICIPANT_TYPE_ALIASES,
+            )
+
+        # Direction handling: when only the positional ``query`` was
+        # given, match either side; when ``subject``/``object`` were
+        # passed, pin them.
+        if subject is not None and obj_pks is not None:
+            rel_filters['subject_entity_pks'] = subj_pks
+            rel_filters['object_entity_pks'] = obj_pks
+        elif subject is not None:
+            rel_filters['subject_entity_pks'] = subj_pks
+        elif object is not None:
+            rel_filters['object_entity_pks'] = obj_pks
+        elif subj_pks is not None:
+            rel_filters['entity_pks'] = subj_pks
+
+        rel_df = self.relations(**rel_filters)
+
+        if rel_df.height == 0:
+            return rel_df
+
+        import polars as pl
+
+        all_pks = (
+            pl.concat([
+                rel_df.select(pl.col('subject_entity_pk').alias('pk')),
+                rel_df.select(pl.col('object_entity_pk').alias('pk')),
+            ])
+            .unique()
+            .drop_nulls()
+            ['pk']
+            .to_list()
+        )
+
+        ent_df = self.entities(entity_pks=[str(p) for p in all_pks])
+
+        out = join_relations_with_entities(
+            rel_df, ent_df,
+            id_types=id_types,
+            keep_canonical=keep_canonical,
+        )
+
+        if group_by and group_by in out.columns:
+            out = out.sort(group_by)
+        if limit is not None:
+            out = out.head(limit)
+
+        return out
+
+    def _resolve_to_pks(
+        self,
+        x: str | int | Sequence[str | int] | None,
+    ) -> list[str] | None:
+        if x is None:
+            return None
+
+        items = [x] if isinstance(x, (str, int)) else list(x)
+        out: list[str] = []
+        names: list[str] = []
+
+        for item in items:
+            if _is_int(item):
+                out.append(str(item))
+            else:
+                names.append(str(item))
+
+        if names:
+            res = self.resolve(names)
+            for m in res.get('matches', []):
+                out.extend(str(p) for p in m.get('entityPks', []))
+
+        return list(dict.fromkeys(out)) or None
+
+    # --- Cache management ---
+
+    def cache_clear(self) -> int:
+        """Remove every cached response (incl. the cached OpenAPI
+        spec). Returns the number of entries removed."""
+
+        n = self._downloader.clear_cache()
+        # Drop the in-process inventory copy so the next call refetches.
+        self._inventory.load()
+        return n
+
+    @contextmanager
+    def fresh(self) -> Iterator[None]:
+        """Context manager that re-downloads any response touched
+        within the block on first use, then serves subsequent
+        identical requests from the freshly populated cache.
+
+        Example::
+
+            with client.fresh():
+                df = client.related('caffeine', sources=['bindingdb'])
+        """
+
+        self._downloader.enter_fresh()
+        try:
+            yield
+        finally:
+            self._downloader.exit_fresh()
+
     # --- Introspection ---
 
     @property
@@ -359,6 +616,16 @@ class OmniPath:
         """Allowed values for a parameter on an endpoint."""
 
         return self._inventory.allowed_values(endpoint, param)
+
+
+def _is_int(x: Any) -> bool:
+    if isinstance(x, bool):
+        return False
+    if isinstance(x, int):
+        return True
+    if isinstance(x, str):
+        return x.lstrip('-').isdigit()
+    return False
 
 
 # --- Module-level convenience API via lazy default singleton ---
@@ -555,3 +822,79 @@ def values(endpoint: str, param: str) -> list[str] | None:
     """
 
     return _get_default().values(endpoint, param)
+
+
+def lookup(
+    query: str | int | Sequence[str | int],
+    id_types: Sequence[str] = DEFAULT_ID_TYPES,
+    *,
+    keep_canonical: bool = False,
+) -> Any:
+    """Resolve and enrich entities using the default client.
+
+    See ``OmniPath.lookup`` for details.
+    """
+
+    return _get_default().lookup(
+        query,
+        id_types=id_types,
+        keep_canonical=keep_canonical,
+    )
+
+
+def related(
+    query: str | int | Sequence[str | int] | None = None,
+    *,
+    subject: str | int | Sequence[str | int] | None = None,
+    object: str | int | Sequence[str | int] | None = None,
+    sources: Sequence[str] | None = None,
+    predicates: Sequence[str] | None = None,
+    relation_categories: Sequence[str] | None = None,
+    participant_types: Sequence[str] | None = None,
+    id_types: Sequence[str] = DEFAULT_ID_TYPES,
+    group_by: str | None = None,
+    limit: int | None = None,
+    keep_canonical: bool = False,
+) -> Any:
+    """Pull joined relations around a query using the default client.
+
+    See ``OmniPath.related`` for details.
+    """
+
+    return _get_default().related(
+        query,
+        subject=subject,
+        object=object,
+        sources=sources,
+        predicates=predicates,
+        relation_categories=relation_categories,
+        participant_types=participant_types,
+        id_types=id_types,
+        group_by=group_by,
+        limit=limit,
+        keep_canonical=keep_canonical,
+    )
+
+
+def cache_clear() -> int:
+    """Clear the on-disk cache for the default client. Returns the
+    number of entries removed."""
+
+    return _get_default().cache_clear()
+
+
+@contextmanager
+def fresh() -> Iterator[None]:
+    """Context manager that re-downloads any responses touched within
+    the block (first-touch refresh, then served from the freshly
+    populated cache).
+
+    Example::
+
+        import omnipath_client as oc
+        with oc.fresh():
+            df = oc.related('caffeine', sources=['bindingdb'])
+    """
+
+    with _get_default().fresh():
+        yield
