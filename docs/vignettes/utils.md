@@ -62,6 +62,26 @@ translate(['TP53', 'EGFR', 'BRCA1'], 'genesymbol', 'uniprot')
 # {'TP53': {'P04637'}, 'EGFR': {'P00533'}, 'BRCA1': {'P38398'}}
 ```
 
+### Resolving across all organisms (`full_uniprot`)
+
+The curated tables cover the common organisms. For the **long tail of organisms**
+there is a comprehensive table built from the complete UniProt idmapping (all
+organisms). The `full_uniprot` argument (on `map_name`, `map_names`, `translate`)
+controls how it is used:
+
+| value | behaviour |
+|-------|-----------|
+| `'fallback'` (default) | curated table first; the full table is consulted **only for identifiers the curated table did not resolve** |
+| `'never'` | curated only |
+| `'both'` | query both and merge (deduplicated) |
+| `'only'` | the full table only |
+
+```python
+# EGFR in chimpanzee (9598) — absent from the curated tables, resolved via the full table
+map_name('EGFR', 'genesymbol', 'uniprot', ncbi_tax_id=9598)                    # resolves
+map_name('EGFR', 'genesymbol', 'uniprot', ncbi_tax_id=9598, full_uniprot='never')  # empty
+```
+
 ### Full translation tables
 
 Download a complete ID mapping table as a dict or DataFrame:
