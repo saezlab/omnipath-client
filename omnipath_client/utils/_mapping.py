@@ -18,8 +18,14 @@ def map_name(
     ncbi_tax_id: int = 9606,
     raw: bool = False,
     backend: str | None = None,
+    full_uniprot: str = 'fallback',
 ) -> set[str]:
-    """Translate a single identifier via the web service."""
+    """Translate a single identifier via the web service.
+
+    ``full_uniprot`` controls use of the comprehensive full-UniProt table (all
+    organisms): ``'fallback'`` (default — curated first, full-UniProt only for
+    unresolved IDs), ``'never'``, ``'both'``, ``'only'``.
+    """
 
     params: dict[str, Any] = {
         'identifiers': name,
@@ -27,6 +33,7 @@ def map_name(
         'target_id_type': target_id_type,
         'ncbi_tax_id': ncbi_tax_id,
         'raw': raw,
+        'full_uniprot': full_uniprot,
     }
 
     if backend:
@@ -45,6 +52,7 @@ def map_names(
     ncbi_tax_id: int = 9606,
     raw: bool = False,
     backend: str | None = None,
+    full_uniprot: str = 'fallback',
 ) -> set[str]:
     """Translate multiple identifiers, return union."""
 
@@ -55,6 +63,7 @@ def map_names(
         ncbi_tax_id,
         raw=raw,
         backend=backend,
+        full_uniprot=full_uniprot,
     )
 
     return set().union(*result.values())
@@ -80,8 +89,13 @@ def translate(
     ncbi_tax_id: int = 9606,
     raw: bool = False,
     backend: str | None = None,
+    full_uniprot: str = 'fallback',
 ) -> dict[str, set[str]]:
-    """Batch translate via POST (for large lists)."""
+    """Batch translate via POST (for large lists).
+
+    ``full_uniprot`` controls use of the comprehensive full-UniProt table:
+    ``'fallback'`` (default), ``'never'``, ``'both'``, ``'only'``.
+    """
 
     body: dict[str, Any] = {
         'identifiers': identifiers,
@@ -89,6 +103,7 @@ def translate(
         'target_id_type': target_id_type,
         'ncbi_tax_id': ncbi_tax_id,
         'raw': raw,
+        'full_uniprot': full_uniprot,
     }
 
     if backend:
@@ -104,6 +119,7 @@ def translate(
             'target_id_type': target_id_type,
             'ncbi_tax_id': ncbi_tax_id,
             'raw': raw,
+            'full_uniprot': full_uniprot,
         }
 
         if backend:
