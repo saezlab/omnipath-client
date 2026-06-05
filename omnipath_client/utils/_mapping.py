@@ -74,10 +74,14 @@ def map_name0(
     id_type: str,
     target_id_type: str,
     ncbi_tax_id: int = 9606,
+    full_uniprot: str = 'fallback',
 ) -> str | None:
     """Translate, return single result."""
 
-    result = map_name(name, id_type, target_id_type, ncbi_tax_id)
+    result = map_name(
+        name, id_type, target_id_type, ncbi_tax_id,
+        full_uniprot=full_uniprot,
+    )
 
     return next(iter(result)) if result else None
 
@@ -143,6 +147,7 @@ def translate_column(
     expand: bool = True,
     raw: bool = False,
     backend: str | None = None,
+    full_uniprot: str = 'fallback',
 ) -> Any:
     """Translate a DataFrame column via the web service.
 
@@ -167,6 +172,7 @@ def translate_column(
         ncbi_tax_id,
         raw=raw,
         backend=backend,
+        full_uniprot=full_uniprot,
     )
 
     native_ns = nw.get_native_namespace(nw_df)
@@ -235,6 +241,7 @@ def translate_columns(
     ncbi_tax_id: int = 9606,
     keep_untranslated: bool = True,
     expand: bool = True,
+    full_uniprot: str = 'fallback',
 ) -> Any:
     """Translate multiple columns."""
 
@@ -250,6 +257,7 @@ def translate_columns(
             new_column=new_col,
             keep_untranslated=keep_untranslated,
             expand=expand,
+            full_uniprot=full_uniprot,
         )
 
     return df
