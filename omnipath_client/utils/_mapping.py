@@ -148,21 +148,67 @@ def translate_column(
     raw: bool = False,
     backend: str | None = None,
     full_uniprot: str = 'fallback',
+    as_dict: bool = False,
 ) -> Any:
     """Translate a DataFrame column via the web service.
 
     Works with pandas, polars, and pyarrow DataFrames via narwhals.
+
+    If the column holds **lists of identifiers** (one cell = several names, as
+    in a ``moleculeNames`` column), every name is translated and the new column
+    holds, per row, the sorted list of unique targets — or, with
+    ``as_dict=True``, a ``{source: [targets]}`` dict so you can see which target
+    came from which source. Row count is preserved (``expand`` is ignored for
+    list columns). Scalar columns keep the original behaviour.
     """
 
     import narwhals as nw
 
     new_col = new_column or target_id_type
     nw_df = nw.from_native(df, eager_only=True)
+    native_ns = nw.get_native_namespace(nw_df)
+    col_values = nw_df[column].to_list()
 
-    # Get unique values
-    unique_vals = list(
-        {str(v) for v in nw_df[column].to_list() if v is not None}
-    )
+    # List-valued cells: translate each name, emit a list (or dict) per row.
+    if any(isinstance(v, (list, tuple, set)) for v in col_values):
+        unique_vals = list({
+            str(n)
+            for cell in col_values if cell is not None
+            for n in (cell if isinstance(cell, (list, tuple, set)) else [cell])
+            if n is not None and str(n)
+        })
+        trans = translate(
+            unique_vals, id_type, target_id_type, ncbi_tax_id,
+            raw=raw, backend=backend, full_uniprot=full_uniprot,
+        )
+        out: list[Any] = []
+        for cell in col_values:
+            if cell is None:
+                out.append(None)
+                continue
+            names = cell if isinstance(cell, (list, tuple, set)) else [cell]
+            if as_dict:
+                out.append({
+                    str(n): sorted(trans.get(str(n), set()))
+                    for n in names
+                    if n is not None
+                    and (keep_untranslated or trans.get(str(n)))
+                })
+            else:
+                hits = sorted({
+                    t for n in names if n is not None
+                    for t in trans.get(str(n), set())
+                })
+                out.append(hits if (hits or keep_untranslated) else None)
+        result = nw_df.with_columns(
+            nw.new_series(
+                name=new_col, values=out, backend=native_ns,
+            ),
+        )
+        return nw.to_native(result)
+
+    # Scalar cells: existing behaviour.
+    unique_vals = list({str(v) for v in col_values if v is not None})
 
     # Batch translate via service
     trans = translate(
@@ -225,7 +271,7 @@ def translate_column(
             nw.new_series(
                 name=new_col,
                 values=values,
-                native_namespace=native_ns,
+                backend=native_ns,
             ),
         )
 
