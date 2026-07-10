@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from typing import Any
-import logging
 
+from omnipath_client._session import get_logger
 from omnipath_client.utils._base import _get, _post
 
 
-_log = logging.getLogger(__name__)
+_log = get_logger(__name__)
 
 
 def map_name(

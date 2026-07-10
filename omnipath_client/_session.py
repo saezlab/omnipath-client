@@ -79,3 +79,93 @@ def get_logger(name: str = 'omnipath_client') -> logging.Logger:
         _logger.addHandler(logging.NullHandler())
 
     return logging.getLogger(name)
+
+
+def _active_log_files() -> list[Path]:
+    """Collect ``FileHandler`` destinations from the logging tree (fallback)."""
+
+    handlers: list[logging.Handler] = list(logging.getLogger().handlers)
+
+    for obj in logging.Logger.manager.loggerDict.values():
+        if isinstance(obj, logging.Logger):
+            handlers.extend(obj.handlers)
+
+    seen: dict[str, Path] = {}
+
+    for handler in handlers:
+        base = getattr(handler, 'baseFilename', None)
+        if base and base not in seen:
+            seen[base] = Path(base)
+
+    return list(seen.values())
+
+
+def logfile() -> Path | None:
+    """Return the path of the current log file, or ``None`` if none is active.
+
+    Ensures logging is initialized, then delegates to ``pkg_infra``. Falls back
+    to inspecting the standard logging handlers when ``pkg_infra`` is
+    unavailable or too old to provide the helper.
+    """
+
+    get_logger()
+
+    try:
+        from pkg_infra import logfile as _pkg_logfile
+
+        return _pkg_logfile()
+
+    except (ImportError, AttributeError):
+        files = _active_log_files()
+        existing = [path for path in files if path.exists()]
+
+        if existing:
+            return max(existing, key=lambda path: path.stat().st_mtime)
+
+        return files[0] if files else None
+
+
+def open_log(
+    path: str | Path | None = None,
+    pager: str | None = None,
+) -> Path | None:
+    """Open the current (or given) log file in a terminal pager.
+
+    Args:
+        path: Log file to open. Defaults to :func:`logfile`.
+        pager: Pager command. Defaults to ``$PAGER`` or ``less``.
+
+    Returns:
+        The path that was opened, or ``None`` when no log file is available.
+    """
+
+    get_logger()
+
+    try:
+        from pkg_infra import open_log as _pkg_open_log
+
+        return _pkg_open_log(path=path, pager=pager)
+
+    except (ImportError, AttributeError):
+        import os
+        import shutil
+        import subprocess
+
+        target = Path(path) if path is not None else logfile()
+
+        if target is None:
+            return None
+
+        if not target.exists():
+            print(target)
+            return target
+
+        pager_cmd = (pager or os.environ.get('PAGER') or 'less').split()
+
+        if shutil.which(pager_cmd[0]) is None:
+            print(target)
+            return target
+
+        subprocess.run([*pager_cmd, str(target)], check=False)  # noqa: S603
+
+        return target

@@ -193,15 +193,32 @@ class Downloader:
         self,
         url: str,
         *,
+        method: str = 'GET',
         params: dict[str, Any] | None = None,
+        payload: dict[str, Any] | None = None,
         force_download: bool = False,
     ) -> Any:
-        """Download and decode a JSON response."""
+        """Download and decode a JSON response.
+
+        Args:
+            url:
+                Target URL.
+            method:
+                HTTP method, ``'GET'`` (default) or ``'POST'``.
+            params:
+                Query parameters for a ``GET`` request.
+            payload:
+                JSON body for a ``POST`` request.
+            force_download:
+                Bypass the cache and re-fetch.
+        """
+
+        body = payload if method.upper() == 'POST' else params
 
         result = self._download_url(
             url,
-            method='GET',
-            payload=params,
+            method=method.upper(),
+            payload=body,
             force_download=force_download,
         )
 
