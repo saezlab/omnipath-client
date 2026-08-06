@@ -184,7 +184,7 @@ def test_annotations_land_on_the_nodes_the_graph_holds(interactions):
     graph = to_annnet(interactions)
     annotate_nodes(graph, pl.DataFrame(ANNOTATIONS))
     assert (
-        graph.attrs.get_attr_vertex('STAT3', 'UniProt_location:location')
+        graph.attrs.get_attr_node('STAT3', 'UniProt_location:location')
         == 'nucleus'
     )
     assert 'NOTHERE' not in set(graph.N)
@@ -193,9 +193,7 @@ def test_annotations_land_on_the_nodes_the_graph_holds(interactions):
 def test_a_pair_with_several_values_joins_them_in_a_stable_order(interactions):
     graph = to_annnet(interactions)
     annotate_nodes(graph, pl.DataFrame(ANNOTATIONS))
-    assert (
-        graph.attrs.get_attr_vertex('EGFR', 'HGNC:family') == 'kinase;receptor'
-    )
+    assert graph.attrs.get_attr_node('EGFR', 'HGNC:family') == 'kinase;receptor'
 
 
 def test_the_caller_may_ask_for_some_resources_only(interactions):
@@ -204,10 +202,10 @@ def test_the_caller_may_ask_for_some_resources_only(interactions):
         graph, pl.DataFrame(ANNOTATIONS), sources=['UniProt_location']
     )
     assert (
-        graph.attrs.get_attr_vertex('STAT3', 'UniProt_location:location')
+        graph.attrs.get_attr_node('STAT3', 'UniProt_location:location')
         == 'nucleus'
     )
-    assert graph.attrs.get_attr_vertex('EGFR', 'HGNC:family') is None
+    assert graph.attrs.get_attr_node('EGFR', 'HGNC:family') is None
 
 
 def test_annotating_returns_the_same_graph(interactions):
@@ -219,9 +217,7 @@ def test_the_annotations_may_arrive_on_any_backend(interactions):
     pytest.importorskip('pandas')
     graph = to_annnet(interactions)
     annotate_nodes(graph, pl.DataFrame(ANNOTATIONS).to_pandas())
-    assert (
-        graph.attrs.get_attr_vertex('EGFR', 'HGNC:family') == 'kinase;receptor'
-    )
+    assert graph.attrs.get_attr_node('EGFR', 'HGNC:family') == 'kinase;receptor'
 
 
 # -- The public surface -----------------------------------------------------

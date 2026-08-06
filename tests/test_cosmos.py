@@ -290,7 +290,7 @@ class TestGetPknFormatAnnnet:
         result = get_pkn(format='annnet')
 
         assert result is mock_graph
-        mock_graph.add_vertices.assert_called_once()
+        mock_graph.add_nodes.assert_called_once()
         mock_graph.add_edges.assert_called_once()
 
 
@@ -357,7 +357,7 @@ class TestGetPknOrganismResolution:
 class TestToAnnnet:
     """Tests for to_annnet() conversion."""
 
-    def test_vertices_extracted_from_source_target(self, annnet_modules):
+    def test_nodes_extracted_from_source_target(self, annnet_modules):
         mock_graph = annnet_modules
         df, _ = _make_df(SAMPLE_NETWORK)
 
@@ -365,9 +365,9 @@ class TestToAnnnet:
 
         to_annnet(df)
 
-        vertices = mock_graph.add_vertices.call_args[0][0]
-        vertex_ids = {v['vertex_id'] for v in vertices}
-        assert vertex_ids == {'TP53', 'MDM2', 'ATP', 'EGFR', 'BCL2'}
+        nodes = mock_graph.add_nodes.call_args[0][0]
+        node_ids = {v['node_id'] for v in nodes}
+        assert node_ids == {'TP53', 'MDM2', 'ATP', 'EGFR', 'BCL2'}
 
     def test_edges_added_in_bulk(self, annnet_modules):
         mock_graph = annnet_modules
@@ -392,8 +392,8 @@ class TestToAnnnet:
 
         to_annnet(df)
 
-        vertices = mock_graph.add_vertices.call_args[0][0]
-        type_map = {v['vertex_id']: v['entity_type'] for v in vertices}
+        nodes = mock_graph.add_nodes.call_args[0][0]
+        type_map = {v['node_id']: v['entity_type'] for v in nodes}
         assert type_map['TP53'] == 'protein'
         assert type_map['ATP'] == 'small_molecule'
         assert type_map['EGFR'] == 'protein'
@@ -421,7 +421,7 @@ class TestToAnnnet:
         result = to_annnet(df)
 
         assert result is mock_graph
-        mock_graph.add_vertices.assert_called_once()
+        mock_graph.add_nodes.assert_called_once()
         mock_graph.add_edges.assert_called_once()
 
     def test_works_with_polars(self, annnet_modules):
@@ -434,12 +434,12 @@ class TestToAnnnet:
         result = to_annnet(df)
 
         assert result is mock_graph
-        mock_graph.add_vertices.assert_called_once()
+        mock_graph.add_nodes.assert_called_once()
         mock_graph.add_edges.assert_called_once()
 
-        vertices = mock_graph.add_vertices.call_args[0][0]
+        nodes = mock_graph.add_nodes.call_args[0][0]
         edges = mock_graph.add_edges.call_args[0][0]
-        assert len(vertices) == 5
+        assert len(nodes) == 5
         assert len(edges) == 3
 
     def test_raises_import_error_without_annnet(self):

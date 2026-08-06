@@ -20,7 +20,7 @@ def to_annnet(df: Any) -> Any:
     """Convert a COSMOS PKN DataFrame to an AnnNet Graph.
 
     One bulk call per axis. Entity types (protein, small_molecule) are
-    stored as vertex attributes, and interaction metadata as edge
+    stored as node attributes, and interaction metadata as edge
     attributes.
 
     Args:
@@ -78,16 +78,16 @@ def to_annnet(df: Any) -> Any:
     # -- Build graph ----------------------------------------------------------
     g = AnnNet()
 
-    # Bulk add vertices
-    vertices = [
-        {'vertex_id': vid, 'entity_type': etype}
+    # Bulk add nodes
+    nodes = [
+        {'node_id': vid, 'entity_type': etype}
         for vid, etype in entity_types.items()
     ]
-    g.add_vertices(vertices)
+    g.add_nodes(nodes)
 
     logger.info(
-        'AnnNet: added %d vertices (%d protein, %d small_molecule)',
-        len(vertices),
+        'AnnNet: added %d nodes (%d protein, %d small_molecule)',
+        len(nodes),
         sum(1 for v in entity_types.values() if v == 'protein'),
         sum(1 for v in entity_types.values() if v == 'small_molecule'),
     )

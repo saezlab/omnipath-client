@@ -407,7 +407,7 @@ def annotate_nodes(
     for genesymbol, attribute, joined in aggregated.iter_rows():
         by_node.setdefault(genesymbol, {})[attribute] = joined
 
-    graph.attrs.set_vertex_attrs_bulk(by_node)
+    graph.attrs.set_node_attrs_bulk(by_node)
     logger.info(
         'Annotated %d of %d nodes with %d attribute pairs',
         len(by_node),
