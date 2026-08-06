@@ -33,6 +33,20 @@
     options:
         show_source: false
 
+### Graph conversion
+
+::: omnipath_client.to_annnet
+    options:
+        show_source: false
+
+::: omnipath_client.annotate_nodes
+    options:
+        show_source: false
+
+::: omnipath_client.node_annotations
+    options:
+        show_source: false
+
 ### Lookup and slice
 
 ::: omnipath_client.resolve

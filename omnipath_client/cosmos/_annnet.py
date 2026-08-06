@@ -6,10 +6,12 @@ Uses bulk operations for efficient graph construction.
 
 from __future__ import annotations
 
+
 __all__ = ['to_annnet']
 
-import logging
 from typing import Any
+import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +19,9 @@ logger = logging.getLogger(__name__)
 def to_annnet(df: Any) -> Any:
     """Convert a COSMOS PKN DataFrame to an AnnNet Graph.
 
-    Uses ``add_vertices_bulk`` and ``add_edges_bulk`` for efficient
-    construction.  Entity types (protein, small_molecule) are stored
-    as vertex attributes; interaction metadata as edge attributes.
+    One bulk call per axis. Entity types (protein, small_molecule) are
+    stored as vertex attributes, and interaction metadata as edge
+    attributes.
 
     Args:
         df: COSMOS PKN DataFrame (polars or pandas) with columns:
@@ -81,7 +83,7 @@ def to_annnet(df: Any) -> Any:
         {'vertex_id': vid, 'entity_type': etype}
         for vid, etype in entity_types.items()
     ]
-    g.add_vertices_bulk(vertices)
+    g.add_vertices(vertices)
 
     logger.info(
         'AnnNet: added %d vertices (%d protein, %d small_molecule)',
@@ -97,18 +99,20 @@ def to_annnet(df: Any) -> Any:
     resource_col = cols.get('resource', [''] * n_rows)
 
     for i in range(n_rows):
-        edges.append({
-            'source': cols['source'][i],
-            'target': cols['target'][i],
-            'weight': float(mor_col[i]) if mor_col[i] is not None else 0.0,
-            'edge_directed': True,
-            'attributes': {
-                'interaction_type': itype_col[i],
-                'resource': resource_col[i],
-            },
-        })
+        edges.append(
+            {
+                'source': cols['source'][i],
+                'target': cols['target'][i],
+                'weight': float(mor_col[i]) if mor_col[i] is not None else 0.0,
+                'edge_directed': True,
+                'attributes': {
+                    'interaction_type': itype_col[i],
+                    'resource': resource_col[i],
+                },
+            }
+        )
 
-    g.add_edges_bulk(edges)
+    g.add_edges(edges)
 
     logger.info('AnnNet: added %d edges', len(edges))
 

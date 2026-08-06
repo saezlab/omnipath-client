@@ -177,8 +177,28 @@ Relations can be returned as
 g = op.relations(as_graph=True)
 ```
 
-Vertex IDs are entity primary keys; resolve them via `op.entities()`
-or `op.lookup()` if you need human-readable labels.
+Node IDs are entity primary keys. Resolve them through `op.entities()`
+or `op.lookup()` when you need readable labels.
+
+`op.to_annnet` builds a graph from any interaction table, so a table you
+already hold, or one from another OmniPath service, becomes a graph too:
+
+```python
+g = op.to_annnet(df)
+g = op.to_annnet(df, source_col='source_genesymbol', target_col='target_genesymbol')
+```
+
+One row is one edge. Two columns name its endpoints, and every other
+column becomes an attribute of that edge.
+
+`op.annotate_nodes` gives every node of a graph what OmniPath knows about
+it. The annotation archive is downloaded once and read from the cache
+after that:
+
+```python
+op.annotate_nodes(g, sources=['HGNC', 'UniProt_location'])
+g.obs
+```
 
 ## Ontology endpoints
 

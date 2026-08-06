@@ -147,9 +147,9 @@ class OmniPath:
         )
 
         if as_graph:
-            from omnipath_client._graph import relations_to_graph
+            from omnipath_client._graph import to_annnet
 
-            return relations_to_graph(df)
+            return to_annnet(df)
 
         return df
 

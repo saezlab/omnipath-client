@@ -39,9 +39,17 @@ __all__ = [
     'fresh',
     'logfile',
     'log',
+    'to_annnet',
+    'annotate_nodes',
+    'node_annotations',
 ]
 
 from omnipath_client import cosmos, utils
+from omnipath_client._graph import (
+    to_annnet,
+    annotate_nodes,
+    node_annotations,
+)
 from omnipath_client._session import logfile
 from omnipath_client._session import open_log as log
 from ._client import (

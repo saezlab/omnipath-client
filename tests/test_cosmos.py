@@ -290,8 +290,8 @@ class TestGetPknFormatAnnnet:
         result = get_pkn(format='annnet')
 
         assert result is mock_graph
-        mock_graph.add_vertices_bulk.assert_called_once()
-        mock_graph.add_edges_bulk.assert_called_once()
+        mock_graph.add_vertices.assert_called_once()
+        mock_graph.add_edges.assert_called_once()
 
 
 # -- get_pkn tests: organism resolution --------------------------------------
@@ -365,7 +365,7 @@ class TestToAnnnet:
 
         to_annnet(df)
 
-        vertices = mock_graph.add_vertices_bulk.call_args[0][0]
+        vertices = mock_graph.add_vertices.call_args[0][0]
         vertex_ids = {v['vertex_id'] for v in vertices}
         assert vertex_ids == {'TP53', 'MDM2', 'ATP', 'EGFR', 'BCL2'}
 
@@ -377,7 +377,7 @@ class TestToAnnnet:
 
         to_annnet(df)
 
-        edges = mock_graph.add_edges_bulk.call_args[0][0]
+        edges = mock_graph.add_edges.call_args[0][0]
         assert len(edges) == 3
         assert edges[0]['source'] == 'TP53'
         assert edges[0]['target'] == 'MDM2'
@@ -392,7 +392,7 @@ class TestToAnnnet:
 
         to_annnet(df)
 
-        vertices = mock_graph.add_vertices_bulk.call_args[0][0]
+        vertices = mock_graph.add_vertices.call_args[0][0]
         type_map = {v['vertex_id']: v['entity_type'] for v in vertices}
         assert type_map['TP53'] == 'protein'
         assert type_map['ATP'] == 'small_molecule'
@@ -406,7 +406,7 @@ class TestToAnnnet:
 
         to_annnet(df)
 
-        edges = mock_graph.add_edges_bulk.call_args[0][0]
+        edges = mock_graph.add_edges.call_args[0][0]
         assert edges[0]['attributes']['interaction_type'] == 'ppi'
         assert edges[0]['attributes']['resource'] == 'Signor'
         assert edges[0]['edge_directed'] is True
@@ -421,8 +421,8 @@ class TestToAnnnet:
         result = to_annnet(df)
 
         assert result is mock_graph
-        mock_graph.add_vertices_bulk.assert_called_once()
-        mock_graph.add_edges_bulk.assert_called_once()
+        mock_graph.add_vertices.assert_called_once()
+        mock_graph.add_edges.assert_called_once()
 
     def test_works_with_polars(self, annnet_modules):
         pl = pytest.importorskip('polars')
@@ -434,22 +434,24 @@ class TestToAnnnet:
         result = to_annnet(df)
 
         assert result is mock_graph
-        mock_graph.add_vertices_bulk.assert_called_once()
-        mock_graph.add_edges_bulk.assert_called_once()
+        mock_graph.add_vertices.assert_called_once()
+        mock_graph.add_edges.assert_called_once()
 
-        vertices = mock_graph.add_vertices_bulk.call_args[0][0]
-        edges = mock_graph.add_edges_bulk.call_args[0][0]
+        vertices = mock_graph.add_vertices.call_args[0][0]
+        edges = mock_graph.add_edges.call_args[0][0]
         assert len(vertices) == 5
         assert len(edges) == 3
 
     def test_raises_import_error_without_annnet(self):
         df, _ = _make_df(SAMPLE_NETWORK)
 
-        # Remove annnet from sys.modules so the real import fails
+        # Block the import, whether or not annnet is installed here. A None
+        # entry in sys.modules is what makes `import annnet` raise.
         saved = {}
         for key in list(sys.modules):
             if key == 'annnet' or key.startswith('annnet.'):
                 saved[key] = sys.modules.pop(key)
+        sys.modules['annnet'] = None
 
         try:
             from omnipath_client.cosmos._annnet import to_annnet
@@ -457,6 +459,7 @@ class TestToAnnnet:
             with pytest.raises(ImportError, match='annnet is required'):
                 to_annnet(df)
         finally:
+            sys.modules.pop('annnet', None)
             sys.modules.update(saved)
 
 
