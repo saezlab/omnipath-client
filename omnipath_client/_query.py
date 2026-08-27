@@ -82,13 +82,22 @@ class Query:
         if self.endpoint.method != 'GET':
             return {}
 
+        # A path parameter is already spent on the URL; repeating it in the
+        # query string states the same thing twice, and the two can disagree.
+        in_path = set(self.path_params)
+        params = {
+            name: value
+            for name, value in self.params.items()
+            if name not in in_path
+        }
+
         logger.debug(
             'Using query parameters for %s: %s',
             self.endpoint.path,
-            sorted(self.params.keys()),
+            sorted(params.keys()),
         )
 
-        return dict(self.params)
+        return params
 
     @property
     def path_params(self) -> dict[str, Any]:
@@ -164,6 +173,29 @@ class QueryBuilder:
             raise UnknownEndpointError(
                 f'Unknown endpoint: {endpoint!r}. '
                 f'Available: {list(self._inventory.endpoints.keys())}',
+            )
+
+        # A POST endpoint whose body the server publishes as a free-form
+        # object declares no parameters, so there is nothing here to check a
+        # key against. Refusing every key would make the endpoint
+        # unreachable, so the body is passed through and the server answers
+        # for it. Anything the schema *does* describe is still validated.
+        if ep.method == 'POST' and not ep.params:
+            logger.info(
+                'Endpoint %s publishes an unschematized body; '
+                'passing %d key(s) through unvalidated',
+                endpoint,
+                len(params),
+            )
+
+            return Query(
+                endpoint=ep,
+                params={
+                    name: value
+                    for name, value in params.items()
+                    if value is not None
+                },
+                base_url=self._inventory._base_url,
             )
 
         validated: dict[str, Any] = {}
