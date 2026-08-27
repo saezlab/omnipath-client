@@ -269,6 +269,187 @@ class OmniPath:
 
         return self._fetch('resources')
 
+    # --- Interactions endpoints ---
+
+    def interactions(
+        self,
+        filters: dict[str, Any] | None = None,
+        attributes: str | list[str] | None = None,
+        collapse: str | None = None,
+        by_resource: str | None = None,
+        view: str | None = None,
+        order_by: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+        cursor: str | None = None,
+        exact_total: bool = False,
+        include_outofscope_signdir: bool = False,
+    ) -> Any:
+        """Query the interactions, collapsed for the scope asked for.
+
+        The summary on every row — source count, references, sign and
+        direction flags — describes the scope this call states, not the
+        whole build. Restricting to one resource therefore changes the
+        counts, which is the point.
+
+        Args:
+            filters:
+                The scope. Accepts ``resources``, ``exclude_resources``,
+                ``interaction_classes``, ``organisms``, ``datasets``,
+                ``license``, ``entities``, ``entity_annotations`` and
+                ``attribute_filters``. An unknown resource or dataset
+                name is refused rather than silently ignored.
+            attributes:
+                Extra per-interaction attributes to project.
+            collapse:
+                Group key for the collapse; ``'endpoints'`` by default.
+            by_resource:
+                Emit a per-resource block on each row.
+            view:
+                ``'gene'`` (default) or ``'protein'``; picks which
+                identifiers the endpoint columns carry.
+            order_by:
+                Sort key. Sorting on a collapsed value is refused,
+                because it would collapse the whole scope first.
+            limit:
+                Rows per page.
+            offset:
+                Row offset. Deep offsets are refused; page with
+                ``cursor`` instead.
+            cursor:
+                The ``cursor`` a previous page returned.
+            exact_total:
+                Count the scope exactly instead of estimating it.
+            include_outofscope_signdir:
+                Also set the sign and direction flags from resources
+                outside the scope, leaving every count describing the
+                scope.
+
+        Returns:
+            A dict with ``interactions``, ``total``,
+            ``total_is_estimate`` and, when the page filled,
+            ``cursor``.
+        """
+
+        return self._fetch(
+            'interactions',
+            filters=filters or {},
+            attributes=attributes,
+            collapse=collapse,
+            by_resource=by_resource,
+            view=view,
+            order_by=order_by,
+            limit=limit,
+            offset=offset,
+            cursor=cursor,
+            exact_total=exact_total,
+            include_outofscope_signdir=include_outofscope_signdir,
+        )
+
+    def interaction_dataset(
+        self,
+        dataset: str,
+        **params: Any,
+    ) -> Any:
+        """One registered dataset's interactions.
+
+        Sugar for ``interactions(filters={'datasets': dataset})``.
+        The datasets a build carries are listed by
+        ``interaction_parameters()``.
+
+        Args:
+            dataset:
+                Registered dataset name, e.g. ``'liana'`` or
+                ``'metalinksdb'``.
+            **params:
+                ``resources``, ``interaction_classes``, ``organism``,
+                ``attributes``, ``collapse``, ``by_resource``,
+                ``view``, ``limit``, ``offset``, ``cursor``.
+
+        Returns:
+            The same page shape as ``interactions``.
+        """
+
+        return self._fetch(
+            'interactions/{dataset}',
+            dataset=dataset,
+            **params,
+        )
+
+    def interactions_compose(
+        self,
+        components: list[dict[str, Any]] | None = None,
+        **payload: Any,
+    ) -> Any:
+        """Assemble a dataset from components, and price the result.
+
+        Args:
+            components:
+                The parameter sets to combine.
+            **payload:
+                The rest of the composition, such as ``operation``
+                and ``steps``, plus the paging and shape parameters
+                ``interactions`` accepts.
+
+        Returns:
+            The same page shape as ``interactions``.
+        """
+
+        return self._fetch(
+            'interactions/compose',
+            components=components,
+            **payload,
+        )
+
+    def interaction_parameters(self, **scope: Any) -> Any:
+        """The values each query parameter can still take under a scope.
+
+        Reachable means reachable: narrowing to one resource leaves the
+        classes that resource publishes, not every class the build
+        knows. Returns no interactions.
+
+        Args:
+            **scope:
+                The same scope parameters ``interactions`` filters on,
+                passed flat: ``resources``, ``exclude_resources``,
+                ``interaction_classes``, ``organism``, ``datasets``,
+                ``license``, ``entities``, ``entity_types``,
+                ``entity_annotations``, ``curation_flags``.
+
+        Returns:
+            A dict with ``parameters``, ``parameter_groups``,
+            ``folded_columns`` and the resolved ``scope``.
+        """
+
+        return self._fetch('interactions/parameter-values', **scope)
+
+    def interaction_stats(
+        self,
+        exact_total: bool = False,
+        **scope: Any,
+    ) -> Any:
+        """How much a scope holds, without returning any of it.
+
+        Args:
+            exact_total:
+                Count the scope exactly. Without it the total is the
+                cost governor's estimate, and ``total_is_estimate``
+                says which one was answered.
+            **scope:
+                The scope parameters, as for
+                ``interaction_parameters``.
+
+        Returns:
+            A dict with ``total``, ``total_is_estimate``,
+            ``by_resource`` and the resolved ``scope``.
+        """
+
+        return self._fetch(
+            'interactions/stats',
+            exact_total=exact_total,
+            **scope,
+        )
+
     # --- Ontology endpoints ---
 
     def ontology_terms(self, term_ids: list[str]) -> Any:
@@ -719,6 +900,63 @@ def relations_slice(
         query=query,
         limit=limit,
         offset=offset,
+    )
+
+
+def interactions(
+    filters: dict[str, Any] | None = None,
+    **params: Any,
+) -> Any:
+    """Query interactions using the default client.
+
+    See ``OmniPath.interactions`` for details.
+    """
+
+    return _get_default().interactions(filters=filters, **params)
+
+
+def interaction_dataset(dataset: str, **params: Any) -> Any:
+    """One dataset's interactions using the default client.
+
+    See ``OmniPath.interaction_dataset`` for details.
+    """
+
+    return _get_default().interaction_dataset(dataset, **params)
+
+
+def interactions_compose(
+    components: list[dict[str, Any]] | None = None,
+    **payload: Any,
+) -> Any:
+    """Compose a dataset using the default client.
+
+    See ``OmniPath.interactions_compose`` for details.
+    """
+
+    return _get_default().interactions_compose(
+        components=components,
+        **payload,
+    )
+
+
+def interaction_parameters(**scope: Any) -> Any:
+    """Reachable parameter values using the default client.
+
+    See ``OmniPath.interaction_parameters`` for details.
+    """
+
+    return _get_default().interaction_parameters(**scope)
+
+
+def interaction_stats(exact_total: bool = False, **scope: Any) -> Any:
+    """Scope statistics using the default client.
+
+    See ``OmniPath.interaction_stats`` for details.
+    """
+
+    return _get_default().interaction_stats(
+        exact_total=exact_total,
+        **scope,
     )
 
 
