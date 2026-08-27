@@ -19,6 +19,9 @@ __all__ = [
     '__version__',
     '__author__',
     'OmniPath',
+    'datasets',
+    'set_base_url',
+    'base_url',
     'entities',
     'relations',
     'interactions',
@@ -49,7 +52,7 @@ __all__ = [
     'node_annotations',
 ]
 
-from omnipath_client import cosmos, utils
+from omnipath_client import cosmos, utils, datasets
 from omnipath_client._graph import (
     to_annnet,
     annotate_nodes,
@@ -59,6 +62,8 @@ from omnipath_client._session import logfile
 from omnipath_client._session import open_log as log
 from ._client import (
     OmniPath,
+    base_url,
+    set_base_url,
     fresh,
     lookup,
     params,

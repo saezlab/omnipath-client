@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any, Iterator, Sequence
 from contextlib import contextmanager
 
@@ -820,10 +821,56 @@ def _get_default() -> OmniPath:
     global _default_client
 
     if _default_client is None:
-        logger.info('Creating default OmniPath client singleton')
-        _default_client = OmniPath()
+        base_url = os.environ.get('OMNIPATH_BASE_URL', DEFAULT_BASE_URL)
+        logger.info(
+            'Creating default OmniPath client singleton for %s',
+            base_url,
+        )
+        _default_client = OmniPath(base_url=base_url)
 
     return _default_client
+
+
+def set_base_url(base_url: str) -> OmniPath:
+    """Point the module-level functions at an API.
+
+    The service a build is served from is a deployment detail, not a
+    property of the client, so it is set here rather than passed to every
+    call. A development or preview deployment is reached this way, and so
+    is a local one.
+
+    The endpoint inventory belongs to the service, so this builds a new
+    default client rather than re-pointing the old one: the parameters
+    each endpoint accepts are read from the service now being addressed.
+
+    ``OMNIPATH_BASE_URL`` in the environment does the same thing without
+    a call, for a script that should not name a deployment in its source.
+
+    Args:
+        base_url:
+            Base URL of the API, e.g.
+            ``'https://dev3.omnipathdb.org/api'``.
+
+    Returns:
+        The new default client, for a caller that wants to hold on to it.
+    """
+
+    global _default_client
+
+    logger.info('Pointing the default client at %s', base_url)
+    _default_client = OmniPath(base_url=base_url)
+
+    return _default_client
+
+
+def base_url() -> str:
+    """The API the module-level functions currently address.
+
+    Returns:
+        The base URL in use.
+    """
+
+    return _get_default()._base_url
 
 
 def entities(**filters: Any) -> Any:

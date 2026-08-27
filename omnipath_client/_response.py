@@ -132,6 +132,58 @@ def _read_parquet(
     raise BackendNotAvailableError(msg)
 
 
+_FRAME_BUILDERS = {
+    'polars': lambda rows: __import__('polars').DataFrame(
+        rows,
+        infer_schema_length=None,
+        strict=False,
+    ),
+    'pandas': lambda rows: __import__('pandas').DataFrame.from_records(rows),
+    'pyarrow': lambda rows: __import__('pyarrow').Table.from_pylist(rows),
+}
+
+
+def to_frame(
+    records: list[dict[str, Any]],
+    backend: BackendType = 'auto',
+) -> Any:
+    """Turn a list of JSON records into a DataFrame.
+
+    The JSON endpoints answer with records rather than Parquet, so this
+    is the counterpart of ``_read_parquet`` for them. Nested values --
+    the endpoint arrays, the participant list, the attribute document --
+    are handed to the backend as they are, rather than flattened or
+    stringified, so nothing is lost on the way into the frame.
+
+    Args:
+        records:
+            The records, as the API returned them.
+        backend:
+            Target backend, or ``'auto'`` to take the first installed.
+
+    Returns:
+        A DataFrame in that backend. An empty record list still gives a
+        frame, so a caller can chain on the result of a query that
+        matched nothing.
+    """
+
+    target = _detect_backend() if backend == 'auto' else backend
+
+    logger.info(
+        'Building a %s frame from %d record(s)',
+        target,
+        len(records),
+    )
+
+    builder = _FRAME_BUILDERS.get(target)
+
+    if builder is None:
+
+        raise BackendNotAvailableError(f'Unknown backend: {target!r}')
+
+    return builder(list(records))
+
+
 def parse_response(
     source: str | Path | io.BytesIO,
     response_format: ResponseFormat = 'parquet',
