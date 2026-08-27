@@ -30,6 +30,7 @@ omnipath_client/
 ├── _types.py          # Type aliases
 ├── _session.py        # pkg_infra session
 ├── _metadata.py       # Version
+├── datasets.py        # Dataset accessors, resolved from the registry
 └── utils/             # OmniPath Utils client
     ├── __init__.py    # Re-exports all utils functions
     ├── _base.py       # HTTP client (GET/POST to utils.omnipathdb.org)
@@ -62,9 +63,25 @@ Custom URL: `from omnipath_client.utils._base import set_utils_url`
 
 ```python
 import omnipath_client as op
-df = op.interactions(entity_ids = ['Q9Y6K9'])
+
+op.set_base_url('https://dev3.omnipathdb.org/api')   # or OMNIPATH_BASE_URL
+
 df = op.entities(entity_types = ['protein'])
+df = op.relations(sources = ['signor'])
+
+# The general interactions API, and the datasets over it
+op.interactions(filters = {'datasets': 'liana'}, limit = 10)
+op.interaction_stats(resources = 'signor')
+op.interaction_parameters()
+
+op.datasets.names()                  # read from the service
+op.datasets.liana.get(limit = 100)   # a DataFrame
+op.datasets.liana.info()             # resources, attributes, composition
 ```
+
+No dataset name is written down in the client: `datasets.__getattr__`
+resolves an attribute against the service's registry, so a build that
+registers a new dataset serves it without a client release.
 
 The database API auto-populates endpoint definitions from the server's
 API schema (OpenAPI JSON or HTML parsing fallback), validates query
@@ -84,4 +101,4 @@ uv sync
 uv run pytest tests/ -v
 ```
 
-55 tests, all use mocks (no live HTTP).
+135 tests, all use mocks (no live HTTP).

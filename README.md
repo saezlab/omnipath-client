@@ -18,6 +18,10 @@ prior-knowledge web API.
 - Friendly id-type aliases (`name`, `chebi`, `hmdb`, `uniprot`,
   `genesymbol`, `kegg`, …) and participant-type aliases
   (`protein`, `small_molecule`, …) that hide the MI/OM ontology codes
+- **Network datasets** — `op.datasets.liana.get()`,
+  `op.datasets.metalinksdb.info()`; the names are read from the
+  service, so a build that registers a new dataset serves it without
+  a client update
 - Lower-level primitives: export **entities**, **relations**, and
   **annotations** as DataFrames; resolve free-text identifiers; slice
   with paging
