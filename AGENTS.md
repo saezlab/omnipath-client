@@ -101,4 +101,6 @@ uv sync
 uv run pytest tests/ -v
 ```
 
-135 tests, all use mocks (no live HTTP).
+All tests use mocks; none makes a live HTTP call. `test_graph.py` needs
+`annnet` and is not collected without it, so the count depends on which
+optional backends are installed.

@@ -91,7 +91,7 @@ class TestRegistry:
     def test_an_unregistered_name_says_what_is_registered(self, registry):
 
         with pytest.raises(AttributeError, match = 'metalinksdb'):
-            datasets.nosuch
+            _ = datasets.nosuch
 
     def test_a_private_name_is_not_a_dataset(self, registry):
         """
@@ -100,7 +100,7 @@ class TestRegistry:
         """
 
         with pytest.raises(AttributeError):
-            datasets.__wrapped__
+            _ = datasets.__wrapped__
 
 
 class TestDataset:

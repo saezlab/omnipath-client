@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Reach LIANA and MetaLinksDB as DataFrames, from a chosen deployment.
+"""Reach LIANA and MetaLinksDB as DataFrames, from a chosen deployment.
 
     python scripts/demo-datasets.py
     python scripts/demo-datasets.py https://dev.omnipathdb.org/api

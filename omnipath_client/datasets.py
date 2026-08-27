@@ -13,8 +13,7 @@
 # https://opensource.org/license/bsd-3-clause
 #
 
-"""
-The registered datasets, one attribute each.
+"""The registered datasets, one attribute each.
 
 ``datasets.liana`` and ``datasets.metalinksdb`` are not written down
 anywhere in this module. A dataset is a row in the service's registry, so
@@ -39,6 +38,7 @@ those functions directly.
 """
 
 from __future__ import annotations
+
 
 __all__ = ['Dataset', 'names', 'info', 'get']
 
@@ -295,7 +295,7 @@ def __dir__() -> list[str]:
     try:
         registered = names()
 
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.warning(
             'Could not read the dataset registry for completion',
             exc_info=True,
