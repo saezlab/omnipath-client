@@ -33,6 +33,45 @@
     options:
         show_source: false
 
+### Interactions
+
+::: omnipath_client.interactions
+    options:
+        show_source: false
+
+::: omnipath_client.interaction_dataset
+    options:
+        show_source: false
+
+::: omnipath_client.interactions_compose
+    options:
+        show_source: false
+
+::: omnipath_client.interaction_parameters
+    options:
+        show_source: false
+
+::: omnipath_client.interaction_stats
+    options:
+        show_source: false
+
+### Network datasets
+
+::: omnipath_client.datasets
+    options:
+        show_source: false
+        members_order: source
+
+### Configuration
+
+::: omnipath_client.set_base_url
+    options:
+        show_source: false
+
+::: omnipath_client.base_url
+    options:
+        show_source: false
+
 ### Graph conversion
 
 ::: omnipath_client.to_annnet
@@ -99,9 +138,7 @@
     options:
         show_source: false
 
-## Graph conversion
-
-::: omnipath_client._graph.relations_to_graph
+::: omnipath_client._response.to_frame
     options:
         show_source: false
 
