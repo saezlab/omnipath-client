@@ -2,9 +2,8 @@ site_name: omnipath-client
 site_url: https://saezlab.github.io/omnipath-client
 theme:
     name: material
+    custom_dir: overrides
     favicon: assets/favicon.ico
-    icon:
-        logo: material/database
     font:
         text: Raleway
     features:
@@ -29,7 +28,8 @@ theme:
             name: Switch to light mode
 
 extra_css:
--   assets/omnipath-theme.css
+-   assets/palette-sysbioverse.css
+-   assets/docs-theme.css
 
 nav:
 -   Home: index.md
