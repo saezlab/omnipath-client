@@ -1,5 +1,5 @@
 site_name: omnipath-client
-site_url: https://saezlab.github.io/omnipath-client
+site_url: https://omnipath.sysbioverse.org/
 theme:
     name: material
     custom_dir: overrides
