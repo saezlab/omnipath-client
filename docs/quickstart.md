@@ -41,6 +41,13 @@ for most downstream joins.
 
 ### `related()`
 
+!!! warning "Not available at the moment"
+    `related()`, `entities()`, `relations()`, `annotations()` and the paged
+    slices read bulk export endpoints that the OmniPath database service no
+    longer has. An update of the client for the current service is planned.
+    Until then, use `lookup()` and the
+    [network datasets](vignettes/datasets.md).
+
 Pull a wide, joined relations table around a query in one call:
 
 ```python
@@ -83,6 +90,13 @@ Filters: `sources`, `predicates`, `relation_categories`,
 pathway IDs), `limit=` truncates the output.
 
 ## Lower-level primitives
+
+!!! warning "Not available at the moment"
+    `related()`, `entities()`, `relations()`, `annotations()` and the paged
+    slices read bulk export endpoints that the OmniPath database service no
+    longer has. An update of the client for the current service is planned.
+    Until then, use `lookup()` and the
+    [network datasets](vignettes/datasets.md).
 
 The wrappers are thin — when you need raw tables, paged access, or
 graph export, reach for the primitives directly.

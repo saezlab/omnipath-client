@@ -39,6 +39,13 @@ op.lookup(
 
 ### Joined relations
 
+!!! warning "Not available at the moment"
+    `related()`, `entities()`, `relations()`, `annotations()` and the paged
+    slices read bulk export endpoints that the OmniPath database service no
+    longer has. An update of the client for the current service is planned.
+    Until then, use `lookup()` and the
+    [network datasets](datasets.md).
+
 ```python
 # Drug targets for caffeine — positional arg matches either side
 op.related(
@@ -65,6 +72,13 @@ op.related(
 ```
 
 ## Lower-level primitives
+
+!!! warning "Not available at the moment"
+    `related()`, `entities()`, `relations()`, `annotations()` and the paged
+    slices read bulk export endpoints that the OmniPath database service no
+    longer has. An update of the client for the current service is planned.
+    Until then, use `lookup()` and the
+    [network datasets](datasets.md).
 
 When the wrappers don't fit, use the export endpoints directly.
 

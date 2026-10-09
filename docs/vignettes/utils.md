@@ -187,6 +187,11 @@ df = organisms_df(has_data=True) # only organisms with mapping data
 
 ## Orthology
 
+!!! warning "Orthology data is not loaded yet"
+    The production service, `utils.omnipathdb.org`, has no orthology data at
+    the moment, so these functions return empty results. Loading it is
+    planned.
+
 ### Cross-species gene translation
 
 ```python

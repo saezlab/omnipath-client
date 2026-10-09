@@ -1,104 +1,102 @@
-# omnipath-client
+<div class="sv-hero">
+<div class="sv-hero-grid">
+  <img class="sv-hero-logo" src="assets/omnipath-logo.svg" alt="OmniPath logo">
+  <div class="sv-hero-text">
+  <div class="sv-kicker">Python client for OmniPath</div>
+  <h1>omnipath-client</h1>
+  <p class="sv-lead">
+    omnipath-client gives Python access to OmniPath, prior knowledge on
+    molecular biology integrated from more than 200 resources: interactions,
+    networks, annotations and complexes of proteins, genes and metabolites. It
+    also translates identifiers between databases and organisms, and fetches
+    the COSMOS network for multi-omics analysis. Results come as polars, pandas
+    or pyarrow data frames.
+  </p>
+  </div>
+</div>
+</div>
 
-**The easiest way to access molecular biology knowledge in Python.**
+## What you can access
 
-omnipath-client connects you to the [OmniPath](https://omnipathdb.org)
-ecosystem -- a comprehensive collection of molecular biology databases
-covering signaling, gene regulation, protein interactions, metabolomics,
-and more.
+OmniPath runs as three web services. The client has one part for each:
 
-## Why OmniPath?
+| Service | What it provides | In the client |
+| --- | --- | --- |
+| [OmniPath database](https://dev.omnipathdb.org) | Molecules and their identifiers, interactions, annotations and complexes from 200+ resources; named network datasets such as LIANA (ligand–receptor) and MetaLinksDB (metabolite–protein) | `op.lookup()`, `op.datasets` |
+| [OmniPath Utils](https://utils.omnipathdb.org) | Identifier translation for more than 100 identifier types, taxonomy, orthology, reference lists | `op.utils` |
+| [OmniPath Metabo](https://metabo.omnipathdb.org) | The COSMOS prior-knowledge network: signaling, gene regulation, metabolite–protein and metabolic reactions | `op.cosmos` |
 
-OmniPath integrates data from **200+ databases** into a unified resource:
-protein-protein interactions, enzyme-substrate relationships, transcription
-factor targets, protein complexes, functional annotations, intercellular
-communication, and metabolite networks. Instead of querying dozens of
-databases individually, query OmniPath once.
+No local database is necessary: the client queries the services and keeps a
+cache of the responses.
 
-## Why this client?
+## Get started
 
-- **No setup needed** -- queries the web service, no local database required
-- **97 identifier types** -- translate between UniProt, gene symbols, Ensembl,
-  ChEBI, HMDB, and 90+ other ID systems
-- **28,000 organisms** -- taxonomy resolution across NCBI, Ensembl, KEGG, OMA
-- **Orthology** -- cross-species gene translation with 6 backends
-- **DataFrames** -- returns polars, pandas, or pyarrow DataFrames
-- **BSD-3-Clause** -- free to use in any project
+### 1. Install
 
-## Quick examples
+```bash
+pip install "omnipath-client[polars]"
+```
 
-### Translate gene symbols to UniProt
+This installs the client with polars, its default data frame backend. For the
+pandas and pyarrow backends and installation from source, see
+[Installation](installation.md).
+
+### 2. Try it
+
+**Translate identifiers** with OmniPath Utils:
 
 ```python
 from omnipath_client.utils import map_name, translation_df
 
-map_name('TP53', 'genesymbol', 'uniprot')
-# {'P04637'}
+map_name('TP53', 'genesymbol', 'uniprot')     # {'P04637'}
+map_name('caffeine', 'name', 'chebi')         # {'CHEBI:27732'}
 
-# Full translation table as DataFrame
-df = translation_df('genesymbol', 'uniprot')
+translation_df('genesymbol', 'uniprot')       # the full table, 165k rows
 ```
 
-### Cross-species translation
-
-```python
-from omnipath_client.utils import orthology_translate
-
-orthology_translate(['TP53', 'EGFR'], source=9606, target=10090)
-# {'TP53': {'Trp53'}, 'EGFR': {'Egfr'}}
-```
-
-### Query protein interactions
+**Look up molecules** in the OmniPath database, with the identifiers you
+want as columns. The result has one row for each matching entity:
 
 ```python
 import omnipath_client as op
 
-# One-call helper: caffeine drug targets with UniProt + gene symbols
-op.related(
-    'caffeine',
-    sources=['bindingdb'],
-    id_types=['name', 'uniprot', 'genesymbol'],
-)
-
-# Or the lower-level primitive
-df = op.relations(entity_pks=['2119890'])
+op.lookup('caffeine', id_types = ['name', 'chebi', 'hmdb', 'inchikey'])
 ```
 
-### Resolve and enrich identifiers
+**Get a network dataset** as a data frame. The datasets are new, and for now
+a preview deployment serves them:
 
 ```python
-op.lookup(
-    ['caffeine', 'metformin', 'TP53'],
-    id_types=['name', 'chebi', 'hmdb', 'uniprot', 'genesymbol'],
-)
+op.set_base_url('https://dev3.omnipathdb.org/api')
+
+op.datasets.names()                     # ['metalinksdb', 'liana']
+op.datasets.liana.get(limit = 5)        # ligand-receptor interactions
 ```
 
-### Explore the API
+**Fetch the COSMOS network**, here only its metabolite–receptor part:
 
 ```python
-import omnipath_client as op
-
-op.endpoints()                                       # all endpoints
-op.params('exports/relations/parquet')                # available filters
-op.values('exports/entities/parquet', 'entity_types') # allowed values
-op.resources()                                        # source catalog
+op.cosmos.get_pkn('human', categories = ['receptors'])   # 10.9k interactions
 ```
 
-## Learn more
+The [Quickstart](quickstart.md) explains these calls and their options.
 
-- **[OmniPath Utils vignette](vignettes/utils.md)** -- ID translation,
-  taxonomy, orthology, reference lists
-- **[OmniPath Database vignette](vignettes/database.md)** -- interactions,
-  annotations, complexes
-- **[COSMOS PKN vignette](vignettes/cosmos.md)** -- multi-layer
-  prior-knowledge network for multi-omics causal reasoning
-- **[API Reference](reference/index.md)** -- full function documentation
-- **[Installation](installation.md)** -- setup instructions
+### 3. Learn more
 
-## Services
+- **Vignettes**:
+  [OmniPath Utils](vignettes/utils.md) (identifiers, taxonomy, orthology) ·
+  [OmniPath database](vignettes/database.md) ·
+  [network datasets](vignettes/datasets.md) ·
+  [COSMOS PKN](vignettes/cosmos.md)
+- **[API reference](reference/index.md)**: all functions and their options
+- **[About](about.md)**: license, citation and contact
 
-| Service | URL | What it provides |
-|---------|-----|-----------------|
-| OmniPath Database | [dev.omnipathdb.org](https://dev.omnipathdb.org) | Interactions, annotations, complexes, ontology |
-| OmniPath Utils | [utils.omnipathdb.org](https://utils.omnipathdb.org) | ID translation, taxonomy, orthology, reference lists |
-| OmniPath Metabo | [metabo.omnipathdb.org](https://metabo.omnipathdb.org) | COSMOS PKN, metabolite-protein interactions |
+## Why use OmniPath?
+
+OmniPath combines more than 200 resources into one consistent collection:
+protein–protein and gene regulatory interactions, enzyme–substrate
+relationships, protein complexes, functional annotations, intercellular
+communication, and metabolite networks. You query one service instead of
+dozens of databases, each with its own format and identifiers.
+
+The client is free to use in any project under the BSD-3-Clause license.
