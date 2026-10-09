@@ -84,4 +84,4 @@ plugins:
                     show_signature_annotations: false
                     signature_crossrefs: true
 
-copyright: "&copy; 2025-2026 Saez-Rodriguez group, Heidelberg University Hospital"
+copyright: "&copy; 2025&ndash;2026 Saez lab, Korcsmaros lab &amp; sysbioverse contributors"
