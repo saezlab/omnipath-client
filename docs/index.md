@@ -100,3 +100,14 @@ communication, and metabolite networks. You query one service instead of
 dozens of databases, each with its own format and identifiers.
 
 The client is free to use in any project under the BSD-3-Clause license.
+
+<div class="sv-ecosystem">
+  <a href="https://sysbioverse.org/"><img src="assets/sysbioverse-logo.svg" alt="sysbioverse logo"></a>
+  <p>
+    omnipath-client is part of <a href="https://sysbioverse.org/">sysbioverse</a>, an
+    ecosystem of free open source packages for molecular systems biology. The
+    packages share data structures, design principles and workflows, and build
+    on the <a href="https://scverse.org/">scverse</a> ecosystem for single-cell
+    omics analysis.
+  </p>
+</div>
