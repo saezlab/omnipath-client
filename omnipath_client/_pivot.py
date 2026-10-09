@@ -26,7 +26,7 @@ ID_ALIASES: dict[str, tuple[str, ...]] = {
     'kegg': ('MI:2012:Kegg Compound', 'MI:0470:Kegg'),
     'pubchem': ('OM:0002:Pubchem Compound', 'MI:0730:Pubchem'),
     'drugbank': ('MI:2002:Drugbank',),
-    'chembl': ('MI:1349:Chembl',),
+    'chembl': ('MI:0967:Chembl Compound', 'MI:1349:Chembl'),
     'cas': ('MI:2011:Cas',),
     'uniprot': ('MI:1097:Uniprot', 'MI:0473:Uniprotkb'),
     'entrez': ('MI:0477:Entrez',),

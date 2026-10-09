@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import Any, Iterator, Sequence
 from contextlib import contextmanager
 
@@ -22,6 +23,13 @@ from omnipath_client._response import parse_response
 from omnipath_client._constants import DEFAULT_BASE_URL
 from omnipath_client._endpoints import ParamDef, EndpointDef
 from omnipath_client._inventory import Inventory
+
+
+_UUID_RE = re.compile(
+    r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
+    re.IGNORECASE,
+)
+_TERM_RE = re.compile(r'(?P<label>.+):(?P<code>[A-Z]+:\d+)')
 
 
 logger = get_logger(__name__)
@@ -531,6 +539,74 @@ class OmniPath:
 
     # --- High-level helpers ---
 
+    def _entities_by_pks(self, entity_pks: list[str]) -> Any:
+        """Entity records with their identifiers, by entity primary key.
+
+        Reads the ``entities/by-pks`` endpoint of the database service
+        and returns a polars DataFrame in the column layout that
+        :func:`pivot_identifiers` reads: ``entity_pk``, ``entity_type``,
+        ``canonical_identifier``, ``canonical_identifier_type``,
+        ``taxonomy_id``, ``sources`` and a long-form ``identifiers``
+        list of ``{identifier, identifier_type}`` structs. Ontology
+        terms are written as ``PREFIX:NUMBER:Label``.
+
+        Args:
+            entity_pks:
+                Entity primary keys (UUID strings).
+
+        Returns:
+            A polars DataFrame with one row per entity found.
+        """
+
+        import polars as pl
+
+        entities = (
+            self._fetch('entities/by-pks', entityPks = entity_pks)
+            .get('entities', [])
+            if entity_pks else []
+        )
+
+        rows = [
+            {
+                'entity_pk': e['entityPk'],
+                'entity_type': _term_code_first(e.get('entityType')),
+                'canonical_identifier': e.get('canonicalIdentifier'),
+                'canonical_identifier_type': _term_code_first(
+                    e.get('canonicalIdentifierType'),
+                ),
+                'taxonomy_id': e.get('taxonomyId'),
+                'sources': e.get('sources') or [],
+                'identifiers': [
+                    {
+                        'identifier': i['identifier'],
+                        'identifier_type': _term_code_first(
+                            i.get('identifierType'),
+                        ),
+                    }
+                    for i in e.get('identifiers') or []
+                ],
+            }
+            for e in entities
+        ]
+
+        return pl.DataFrame(
+            rows,
+            schema = {
+                'entity_pk': pl.String,
+                'entity_type': pl.String,
+                'canonical_identifier': pl.String,
+                'canonical_identifier_type': pl.String,
+                'taxonomy_id': pl.Int64,
+                'sources': pl.List(pl.String),
+                'identifiers': pl.List(
+                    pl.Struct({
+                        'identifier': pl.String,
+                        'identifier_type': pl.String,
+                    }),
+                ),
+            },
+        )
+
     def lookup(
         self,
         query: str | int | Sequence[str | int],
@@ -560,11 +636,11 @@ class OmniPath:
         """
 
         items = [query] if isinstance(query, (str, int)) else list(query)
-        names = [str(x) for x in items if not _is_int(x)]
-        explicit_pks = [str(x) for x in items if _is_int(x)]
+        names = [str(x) for x in items if not _is_pk(x)]
+        explicit_pks = [str(x) for x in items if _is_pk(x)]
 
         resolved_pks: list[str] = list(explicit_pks)
-        match_query: dict[int, list[str]] = {}
+        match_query: dict[str, list[str]] = {}
 
         if names:
             res = self.resolve(names)
@@ -572,17 +648,16 @@ class OmniPath:
                 pks = [str(p) for p in m.get('entityPks', [])]
                 resolved_pks.extend(pks)
                 for p in pks:
-                    match_query.setdefault(int(p), []).append(m['identifier'])
+                    match_query.setdefault(p, []).append(m['identifier'])
+
+        ents = self._entities_by_pks(list(dict.fromkeys(resolved_pks)))
 
         if not resolved_pks:
-            ents = self.entities(entity_pks=['__none__'])
             return pivot_identifiers(
                 ents,
                 id_types=id_types,
                 keep_canonical=keep_canonical,
             )
-
-        ents = self.entities(entity_pks=list(dict.fromkeys(resolved_pks)))
         wide = pivot_identifiers(
             ents,
             id_types=id_types,
@@ -798,6 +873,31 @@ class OmniPath:
         """Allowed values for a parameter on an endpoint."""
 
         return self._inventory.allowed_values(endpoint, param)
+
+
+def _is_pk(x: Any) -> bool:
+    """True for an entity primary key: an integer or a UUID string."""
+
+    return _is_int(x) or (
+        isinstance(x, str) and
+        _UUID_RE.fullmatch(x) is not None
+    )
+
+
+def _term_code_first(term: str | None) -> str | None:
+    """Write an ontology term as ``PREFIX:NUMBER:Label``.
+
+    The database service writes ``Label:PREFIX:NUMBER``, e.g.
+    ``Chebi:MI:0474``; the id-type aliases use ``MI:0474:Chebi``.
+    Terms without a ``PREFIX:NUMBER`` code are returned unchanged.
+    """
+
+    if not term:
+        return term
+
+    m = _TERM_RE.fullmatch(term)
+
+    return f'{m["code"]}:{m["label"]}' if m else term
 
 
 def _is_int(x: Any) -> bool:
