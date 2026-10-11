@@ -46,7 +46,7 @@ for most downstream joins.
     slices read bulk export endpoints that the OmniPath database service no
     longer has. An update of the client for the current service is planned.
     Until then, use `lookup()` and the
-    [network datasets](vignettes/datasets.md).
+    [network datasets](tutorials/datasets.md).
 
 Pull a wide, joined relations table around a query in one call:
 
@@ -96,7 +96,7 @@ pathway IDs), `limit=` truncates the output.
     slices read bulk export endpoints that the OmniPath database service no
     longer has. An update of the client for the current service is planned.
     Until then, use `lookup()` and the
-    [network datasets](vignettes/datasets.md).
+    [network datasets](tutorials/datasets.md).
 
 The wrappers are thin — when you need raw tables, paged access, or
 graph export, reach for the primitives directly.

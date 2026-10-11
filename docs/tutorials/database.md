@@ -1,6 +1,6 @@
 # Querying the OmniPath Database
 
-This vignette shows how to use omnipath-client to query the OmniPath
+This tutorial shows how to use omnipath-client to query the OmniPath
 molecular biology database for relations, annotations, entity records,
 and ontology terms.
 

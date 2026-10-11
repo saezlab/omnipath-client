@@ -1,6 +1,6 @@
 # Working with OmniPath Utils
 
-This vignette shows how to use the OmniPath Utils service for ID
+This tutorial shows how to use the OmniPath Utils service for ID
 translation, taxonomy resolution, orthology, and reference lists.
 
 ## Setup

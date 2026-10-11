@@ -83,11 +83,11 @@ The [Quickstart](quickstart.md) explains these calls and their options.
 
 ### 3. Learn more
 
-- **Vignettes**:
-  [OmniPath Utils](vignettes/utils.md) (identifiers, taxonomy, orthology) ·
-  [OmniPath database](vignettes/database.md) ·
-  [network datasets](vignettes/datasets.md) ·
-  [COSMOS PKN](vignettes/cosmos.md)
+- **Tutorials**:
+  [OmniPath Utils](tutorials/utils.md) (identifiers, taxonomy, orthology) ·
+  [OmniPath database](tutorials/database.md) ·
+  [network datasets](tutorials/datasets.md) ·
+  [COSMOS PKN](tutorials/cosmos.md)
 - **[API reference](reference/index.md)**: all functions and their options
 - **[About](about.md)**: license, citation and contact
 

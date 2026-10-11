@@ -1,6 +1,6 @@
 # COSMOS Prior-Knowledge Network
 
-This vignette shows how to use omnipath-client to access the COSMOS
+This tutorial shows how to use omnipath-client to access the COSMOS
 prior-knowledge network (PKN) -- a multi-layer network designed for
 multi-omics causal reasoning with
 [cosmosR](https://github.com/saezlab/cosmosR).

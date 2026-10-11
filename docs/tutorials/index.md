@@ -1,4 +1,4 @@
-# Vignettes
+# Tutorials
 
 In-depth tutorials and worked examples.
 
