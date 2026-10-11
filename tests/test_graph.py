@@ -89,8 +89,8 @@ def relations():
 
 def test_an_interaction_table_becomes_a_graph(interactions):
     graph = to_annnet(interactions)
-    assert graph.ncount() == 4
-    assert graph.ecount() == 2
+    assert len(graph.N) == 4
+    assert len(graph.E) == 2
     assert set(graph.N) == {'EGFR', 'STAT3', 'TP53', 'MDM2'}
 
 
@@ -109,7 +109,7 @@ def test_every_column_that_names_no_structure_becomes_an_edge_attribute(
 
 def test_the_direction_and_the_weight_come_off_their_columns(interactions):
     graph = to_annnet(interactions)
-    first, second = (graph.get_edge(edge_id) for edge_id in graph.E)
+    first, second = (graph.E.at(edge_id) for edge_id in graph.E)
     assert (first.directed, first.weight) == (True, 1.0)
     assert (second.directed, second.weight) == (False, 2.5)
 
@@ -119,7 +119,7 @@ def test_a_row_that_names_no_endpoint_is_skipped():
         {'source': ['A', 'B'], 'target': ['C', None]},
     )
     graph = to_annnet(table)
-    assert graph.ecount() == 1
+    assert len(graph.E) == 1
 
 
 def test_a_row_that_names_no_endpoint_raises_when_the_caller_asks():
@@ -161,8 +161,8 @@ def test_a_slice_column_places_each_edge():
 
 def test_an_empty_table_gives_an_empty_graph():
     graph = to_annnet(pl.DataFrame({'source': [], 'target': []}))
-    assert graph.ncount() == 0
-    assert graph.ecount() == 0
+    assert len(graph.N) == 0
+    assert len(graph.E) == 0
 
 
 @pytest.mark.parametrize('backend', ['pandas', 'pyarrow'])
@@ -174,7 +174,7 @@ def test_the_table_may_come_from_any_backend(backend, interactions):
         else interactions.to_arrow()
     )
     graph = to_annnet(native)
-    assert graph.ecount() == 2
+    assert len(graph.E) == 2
 
 
 # -- Annotating the nodes ---------------------------------------------------
@@ -184,7 +184,7 @@ def test_annotations_land_on_the_nodes_the_graph_holds(interactions):
     graph = to_annnet(interactions)
     annotate_nodes(graph, pl.DataFrame(ANNOTATIONS))
     assert (
-        graph.attrs.get_attr_node('STAT3', 'UniProt_location:location')
+        graph.attrs.row('nodes', 'STAT3').get('UniProt_location:location')
         == 'nucleus'
     )
     assert 'NOTHERE' not in set(graph.N)
@@ -193,7 +193,7 @@ def test_annotations_land_on_the_nodes_the_graph_holds(interactions):
 def test_a_pair_with_several_values_joins_them_in_a_stable_order(interactions):
     graph = to_annnet(interactions)
     annotate_nodes(graph, pl.DataFrame(ANNOTATIONS))
-    assert graph.attrs.get_attr_node('EGFR', 'HGNC:family') == 'kinase;receptor'
+    assert graph.attrs.row('nodes', 'EGFR').get('HGNC:family') == 'kinase;receptor'
 
 
 def test_the_caller_may_ask_for_some_resources_only(interactions):
@@ -202,10 +202,10 @@ def test_the_caller_may_ask_for_some_resources_only(interactions):
         graph, pl.DataFrame(ANNOTATIONS), sources=['UniProt_location']
     )
     assert (
-        graph.attrs.get_attr_node('STAT3', 'UniProt_location:location')
+        graph.attrs.row('nodes', 'STAT3').get('UniProt_location:location')
         == 'nucleus'
     )
-    assert graph.attrs.get_attr_node('EGFR', 'HGNC:family') is None
+    assert graph.attrs.row('nodes', 'EGFR').get('HGNC:family') is None
 
 
 def test_annotating_returns_the_same_graph(interactions):
@@ -217,7 +217,7 @@ def test_the_annotations_may_arrive_on_any_backend(interactions):
     pytest.importorskip('pandas')
     graph = to_annnet(interactions)
     annotate_nodes(graph, pl.DataFrame(ANNOTATIONS).to_pandas())
-    assert graph.attrs.get_attr_node('EGFR', 'HGNC:family') == 'kinase;receptor'
+    assert graph.attrs.row('nodes', 'EGFR').get('HGNC:family') == 'kinase;receptor'
 
 
 # -- The public surface -----------------------------------------------------

@@ -195,7 +195,7 @@ def to_annnet(
         import omnipath_client as oc
 
         graph = oc.to_annnet(oc.relations(interaction_types='post_translational'))
-        graph.ncount(), graph.ecount()
+        len(graph.N), len(graph.E)
     """
 
     annnet = _require_annnet()
@@ -281,8 +281,8 @@ def to_annnet(
 
     logger.info(
         'Built a graph of %d nodes and %d edges, skipping %d rows with no endpoint',
-        graph.ncount(),
-        graph.ecount(),
+        len(graph.N),
+        len(graph.E),
         skipped,
     )
     return graph
@@ -407,7 +407,7 @@ def annotate_nodes(
     for genesymbol, attribute, joined in aggregated.iter_rows():
         by_node.setdefault(genesymbol, {})[attribute] = joined
 
-    graph.attrs.set_node_attrs_bulk(by_node)
+    graph.attrs.update('nodes', by_node)
     logger.info(
         'Annotated %d of %d nodes with %d attribute pairs',
         len(by_node),
